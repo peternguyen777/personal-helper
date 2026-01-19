@@ -1,11 +1,11 @@
 ---
 name: what-to-wear
-description: Use when asked "what should I wear today?" or similar outfit/clothing questions
+description: Use when asked "what should I wear today?", weekly outfit planning, or similar clothing questions
 ---
 
 # What to Wear Skill
 
-Recommend daily outfits based on weather conditions, styled around ametora (Japanese Americana) aesthetics.
+Recommend daily or weekly outfits based on weather conditions, styled around ametora (Japanese Americana) aesthetics.
 
 ## Instructions
 
@@ -49,6 +49,63 @@ Recommend daily outfits based on weather conditions, styled around ametora (Japa
 > - **Outer layer** (optional): [if needed based on temperature/conditions]
 >
 > **Styling notes**: [optional tips on fit, tucking, rolling sleeves/cuffs, color coordination, or how to wear the pieces together in ametora style]
+
+---
+
+## Weekly Planning Mode
+
+When the user asks for a week's worth of outfits, "what to wear this week", or similar multi-day requests:
+
+### 1. Fetch forecasts for each day
+
+Use `get_forecast` for each day of the week (monday, tuesday, wednesday, thursday, friday, saturday, sunday). Call them in parallel to save time.
+
+### 2. Apply variety logic
+
+Rotate through options to avoid repetition:
+
+| Category | Rotation Pool |
+|----------|---------------|
+| **Tops** | OCBD → chambray → camp collar → tee → rugby shirt → pocket tee |
+| **Bottoms** | Chinos → fatigues → denim → linen trousers |
+| **Shoes** | Loafers → canvas sneakers → leather sneakers → work boots |
+| **Pillars** | Cycle through Ivy → Workwear → Military → Sportswear across the week |
+
+**Variety rules:**
+- Don't repeat the same top on consecutive days
+- Balance colors across the week (don't do navy top 3 days in a row)
+- If weather is similar across days, vary by pillar to keep it interesting
+- Match outer layers to temperature needs, but vary style when possible
+
+### 3. Format weekly response
+
+> **Week Overview for [City]**
+>
+> | Day | Weather | Outfit Summary |
+> |-----|---------|----------------|
+> | Mon | 24°C, sunny | Chambray + chinos + loafers |
+> | Tue | 22°C, overcast | OCBD + fatigues + canvas sneakers |
+> | ... | ... | ... |
+>
+> ---
+>
+> **Monday** - 24°C, sunny
+> - **Top**: Chambray shirt
+> - **Bottom**: Tan chinos
+> - **Shoes**: Penny loafers
+> - **Notes**: [brief styling note]
+>
+> **Tuesday** - 22°C, overcast
+> - **Top**: White OCBD
+> - **Bottom**: Olive fatigues
+> - **Shoes**: White canvas sneakers
+> - **Notes**: [brief styling note]
+>
+> [continue for each day...]
+>
+> **Weekly Capsule Summary**: [List the key pieces needed for the week, e.g., "You'll need: 2 button-ups, 2 tees, 2 chinos, 1 denim, loafers, sneakers, and a light jacket for Wednesday's rain"]
+
+---
 
 ## Ametora Style Guide
 
