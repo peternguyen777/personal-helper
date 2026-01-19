@@ -10,10 +10,16 @@ Recommend daily outfits based on weather conditions, styled around ametora (Japa
 ## Instructions
 
 1. **Get weather data** using the `get_weather` MCP tool
-   - Default city: Sydney
-   - If user mentions being in another city, use that city
+   - Assume Sydney unless user explicitly mentions another city
+   - Never ask for location - just use Sydney by default
+   - The response includes `local_time` for that city
 
-2. **Apply outfit logic** based on feels-like temperature:
+2. **Consider the local time** (from the weather response)
+   - The `local_time` field shows current day and time for the city
+   - Morning commute vs afternoon vs evening can affect layering needs
+   - If it's evening, consider tomorrow morning's weather may differ
+
+3. **Apply outfit logic** based on feels-like temperature:
 
 | Feels Like | Base Layer |
 |------------|------------|
@@ -21,7 +27,7 @@ Recommend daily outfits based on weather conditions, styled around ametora (Japa
 | 18-21°C | Add mid-layer: crew sweater, cardigan, or overshirt |
 | Under 18°C | Add outer layer: chore coat, deck jacket, MA-1, or field jacket |
 
-3. **Apply weather modifiers:**
+4. **Apply weather modifiers:**
 
 | Condition | Adjustment |
 |-----------|------------|
@@ -30,33 +36,46 @@ Recommend daily outfits based on weather conditions, styled around ametora (Japa
 | Humid (>70%) + warm (>25°C) | Favor linen, open-weave cotton, looser fits |
 | Windy (>30 km/h) | Wind-blocking outers over knits |
 
-4. **Format response** like this:
+5. **Format response** with specific categories:
 
 > **Today in [City]**: [temp]°C (feels like [feels_like]°C), [conditions], [wind] km/h wind
+> **Time**: [current local time] - [context about when clothes will be worn]
 >
-> **Recommendation**: [Temperature tier descriptor]. [Specific pieces]. [Footwear note if relevant].
-
-## Example Responses
-
-**Warm day (feels like 24°C):**
-> **Today in Sydney**: 26°C (feels like 24°C), partly cloudy, light wind
+> **Outfit:**
+> - **Top**: [specific ametora top recommendation]
+> - **Bottom**: [specific ametora bottom recommendation]
+> - **Shoes**: [specific ametora footwear recommendation]
+> - **Outer layer** (optional): [if needed based on temperature/conditions]
 >
-> **Recommendation**: T-shirt weather. Camp collar shirt or a broken-in oxford, chinos or fatigues, canvas sneakers or loafers.
+> **Styling notes**: [optional tips on fit, tucking, rolling sleeves/cuffs, color coordination, or how to wear the pieces together in ametora style]
 
-**Cool day (feels like 15°C):**
-> **Today in Sydney**: 16°C (feels like 15°C), overcast, moderate wind
+## Ametora Style Guide
+
+Ametora ("American traditional") is how Japan reinterpreted American style. Draw from these four pillars:
+
+| Pillar | Spirit | Examples |
+|--------|--------|----------|
+| **Ivy/Prep** | East coast collegiate, 1960s | OCBDs, crew sweaters, penny loafers, chinos, rep ties |
+| **Workwear** | Durable, functional, worn-in | Chore coats, chambray, denim, work boots, coveralls |
+| **Military** | Utilitarian, rugged | Field jackets, M-65s, fatigues, deck jackets, olive drab |
+| **Sportswear** | Athletic heritage, casual | Coach's jackets, track tops, rugby shirts, sneakers |
+
+**Key principles:**
+- Natural materials (cotton, wool, leather, linen)
+- Relaxed but intentional fit
+- Muted, earthy tones - navy, olive, tan, cream, brown
+- Pieces that age well and develop character
+- Mix pillars freely (ivy shirt + military jacket is classic ametora)
+
+## Example Response
+
+> **Today in Sydney**: 18°C (feels like 16°C), overcast, moderate wind
+> **Time**: 8:00am - heading out for the day
 >
-> **Recommendation**: Jacket weather. Oxford cloth button-down, selvedge denim, and a chore coat or Bedford jacket. Leather boots work well today.
-
-**Rainy day:**
-> **Today in Sydney**: 18°C (feels like 16°C), rain expected (70% chance)
+> **Outfit:**
+> - **Top**: Chambray shirt
+> - **Bottom**: Olive fatigues
+> - **Shoes**: Leather work boots
+> - **Outer layer**: Navy deck jacket
 >
-> **Recommendation**: Layer for rain. Button-down under a waxed jacket or ventile coat. Skip the canvas shoes—go with leather boots. Bring an umbrella.
-
-## Wardrobe Reference (Ametora Style)
-
-- **Tops**: Oxford cloth button-downs, camp collar shirts, henleys, pocket tees
-- **Mid-layers**: Crew sweaters, cardigans, overshirts, chamois shirts
-- **Outers**: Chore coats, Bedford jackets, deck jackets, MA-1 bombers, field jackets, waxed jackets
-- **Bottoms**: Selvedge denim, chinos, fatigues, baker pants
-- **Footwear**: Leather boots, canvas sneakers, loafers, moc-toe boots
+> **Styling notes**: Military bottoms with a workwear top and ivy-influenced outerwear - classic ametora mixing. Keep the chambray untucked for a relaxed silhouette. The deck jacket handles the wind while staying casual.
