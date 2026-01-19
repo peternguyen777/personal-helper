@@ -27,25 +27,37 @@ Requires `google-sheets-mcp` configured with access to the Wardrobe sheet.
 
 ### Adding Items
 
-When user says "add [item] to my wardrobe":
+When user provides an item to add:
 
-1. **Research the item** - Use WebSearch to find details about the item (materials, construction, heritage)
-2. **Draft the entry** - Based on research, prepare:
-   - Item name
+1. **Research the item**
+   - If user provides a URL → use WebFetch to get details
+   - If user provides just a name → use WebSearch to find details
+   - Look for: materials, construction, heritage, made in country
+
+2. **Draft the entry** - Prepare:
+   - Item name (include color in parentheses if relevant)
    - Category (Top, Bottom, Outer, Shoes, Accessory)
-   - Pillar (Ivy, Workwear, Military, Sportswear) if clear
-   - Quantity (default: 1, or as specified)
-   - Description (brief, informative - materials, construction details, heritage)
-3. **Show for approval** - Present the proposed entry to the user before adding
-4. **Add to sheet** - Once approved, use MCP `append_data` to add row
-5. **Re-sort** - Keep rows sorted by Category (Top → Bottom → Outer → Shoes → Accessory)
+   - Pillar (Ivy, Workwear, Military, Sportswear) - leave blank for versatile basics like white tees
+   - Quantity (default: 1, or as specified by user)
+   - Description (brief - materials, key construction details, origin)
 
-**Example:**
-> User: "Add a Barbour Bedale jacket"
-> → WebSearch for Barbour Bedale details
-> → Draft: "Barbour Bedale", Outer, Workwear, 1, "Sylkoil waxed cotton, corduroy collar, 2 bellows pockets"
-> → Show user for approval
-> → On approval, append and re-sort
+3. **Show for approval** - Present in table format:
+   ```
+   | Field | Value |
+   |-------|-------|
+   | Item | Barbour Bedale (Olive) |
+   | Category | Outer |
+   | Pillar | Workwear |
+   | Quantity | 1 |
+   | Description | Sylkoil waxed cotton, corduroy collar, made in England |
+   ```
+   User may request changes before approving.
+
+4. **Add to sheet** - Once approved, use `append_data` to add new rows
+
+**Batching:** User can provide multiple items at once. Research all, present all in one table, add all on approval.
+
+**Updating existing items:** If user wants to update an item already in the sheet, use `write_range` to update that specific cell/row directly.
 
 ### Listing Items
 
