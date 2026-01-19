@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "weather": {
+      "command": "node",
+      "args": ["mcp-servers/weather/dist/index.js"],
+      "cwd": "/Users/peternguyen/Personal/personal-helper"
+    }
+  }
+}
