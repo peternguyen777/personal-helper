@@ -15,11 +15,14 @@ Requires `google-sheets-mcp` configured with access to the Wardrobe sheet.
 
 ## Sheet Structure
 
-| Column | Values |
-|--------|--------|
-| Item | Item name (e.g., "Navy chore coat") |
-| Category | Top, Bottom, Outer, Shoes, Accessory |
-| Pillar | Ivy, Workwear, Military, Sportswear |
+| Column | Values | Required |
+|--------|--------|----------|
+| Item | Item name (e.g., "Navy chore coat") | Yes |
+| Category | Top, Bottom, Outer, Shoes, Accessory | Yes |
+| Pillar | Ivy, Workwear, Military, Sportswear | No |
+| Quantity | Number of this item owned (default: 1) | Yes |
+| Description | Optional notes about the item | No |
+| Link | URL for more info about the item | No |
 
 ## Commands
 
@@ -29,22 +32,28 @@ When user says "add [item] to my wardrobe":
 
 1. Parse the item description
 2. Infer category from context (jacket → Outer, shirt → Top, etc.)
-3. Infer pillar from style cues, or ask if unclear
-4. Use MCP `append_data` to add row to Wardrobe sheet
-5. Confirm: "Added [item] ([category], [pillar]) to your wardrobe."
+3. Infer pillar from style cues, or leave empty if unclear
+4. Set quantity to 1 (or specified amount)
+5. Include description and link if provided by user
+6. Use MCP `append_data` to add row with columns A:F
+7. Confirm: "Added [item] ([category]) to your wardrobe."
 
 **Example:**
 > User: "Add a navy deck jacket to my wardrobe"
-> → Item: "Navy deck jacket", Category: Outer, Pillar: Military
+> → Item: "Navy deck jacket", Category: Outer, Pillar: Military, Quantity: 1
+> → Append to sheet, confirm addition
+
+> User: "Add 2 white tees from Uniqlo https://uniqlo.com/tee"
+> → Item: "White tee", Category: Top, Pillar: Sportswear, Quantity: 2, Link: https://uniqlo.com/tee
 > → Append to sheet, confirm addition
 
 ### Listing Items
 
 When user says "what's in my wardrobe?" or "show my wardrobe":
 
-1. Use MCP `read_range` to get all items (A:C)
+1. Use MCP `read_range` to get all items (A:F)
 2. Group by category
-3. Display formatted list
+3. Display formatted list (show quantity if > 1, pillar if set)
 
 **Format:**
 ```
@@ -52,7 +61,7 @@ When user says "what's in my wardrobe?" or "show my wardrobe":
 
 **Tops (6)**
 - White OCBD (Ivy)
-- Navy OCBD (Ivy)
+- White tee x2 (Sportswear)
 - Chambray shirt (Workwear)
 ...
 
@@ -65,9 +74,9 @@ When user says "what's in my wardrobe?" or "show my wardrobe":
 
 When user says "show my tops" or "what jackets do I have?":
 
-1. Read wardrobe from sheet
+1. Read wardrobe from sheet (A:F)
 2. Filter by requested category
-3. Display filtered list
+3. Display filtered list with quantity and description if available
 
 ### Removing Items
 
