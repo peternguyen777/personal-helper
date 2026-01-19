@@ -29,22 +29,23 @@ Requires `google-sheets-mcp` configured with access to the Wardrobe sheet.
 
 When user says "add [item] to my wardrobe":
 
-1. Parse the item description
-2. Infer category from context (jacket → Outer, shirt → Top, etc.)
-3. Infer pillar from style cues, or leave empty if unclear
-4. Set quantity to 1 (or specified amount)
-5. Include description if provided by user
-6. Use MCP `append_data` to add row with columns A:E
-7. Confirm: "Added [item] ([category]) to your wardrobe."
+1. **Research the item** - Use WebSearch to find details about the item (materials, construction, heritage)
+2. **Draft the entry** - Based on research, prepare:
+   - Item name
+   - Category (Top, Bottom, Outer, Shoes, Accessory)
+   - Pillar (Ivy, Workwear, Military, Sportswear) if clear
+   - Quantity (default: 1, or as specified)
+   - Description (brief, informative - materials, construction details, heritage)
+3. **Show for approval** - Present the proposed entry to the user before adding
+4. **Add to sheet** - Once approved, use MCP `append_data` to add row
+5. **Re-sort** - Keep rows sorted by Category (Top → Bottom → Outer → Shoes → Accessory)
 
 **Example:**
-> User: "Add a navy deck jacket to my wardrobe"
-> → Item: "Navy deck jacket", Category: Outer, Pillar: Military, Quantity: 1
-> → Append to sheet, confirm addition
-
-> User: "Add 2 white tees from Uniqlo"
-> → Item: "White tee", Category: Top, Pillar: Sportswear, Quantity: 2
-> → Append to sheet, confirm addition
+> User: "Add a Barbour Bedale jacket"
+> → WebSearch for Barbour Bedale details
+> → Draft: "Barbour Bedale", Outer, Workwear, 1, "Sylkoil waxed cotton, corduroy collar, 2 bellows pockets"
+> → Show user for approval
+> → On approval, append and re-sort
 
 ### Listing Items
 
