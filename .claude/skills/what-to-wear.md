@@ -12,7 +12,7 @@ Recommend daily or weekly outfits based on weather conditions, styled around ame
 Requires:
 - `weather` MCP for weather data
 - `google-sheets-mcp` for wardrobe access
-- Google Sheet named "Wardrobe" with columns: Item, Category, Pillar
+- Wardrobe spreadsheet ID: `1Cx2KUswPEQypVMUPUTPtLOFQ3oGdme1TcFf7z5BZ_7k`
 
 ## Instructions
 

@@ -9,7 +9,9 @@ Manage your wardrobe catalog stored in Google Sheets.
 
 ## Prerequisites
 
-Requires `google-sheets-mcp` configured with access to a sheet named "Wardrobe".
+Requires `google-sheets-mcp` configured with access to the Wardrobe sheet.
+
+**Spreadsheet ID**: `1Cx2KUswPEQypVMUPUTPtLOFQ3oGdme1TcFf7z5BZ_7k`
 
 ## Sheet Structure
 

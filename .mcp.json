@@ -4,6 +4,10 @@
       "command": "node",
       "args": ["mcp-servers/weather/dist/index.js"],
       "cwd": "/Users/peternguyen/Personal/personal-helper"
+    },
+    "google-sheets": {
+      "command": "/Users/peternguyen/Personal/personal-helper/mcp-servers/google-sheets/venv/bin/python",
+      "args": ["-m", "claude_google_sheets.server"]
     }
   }
 }
