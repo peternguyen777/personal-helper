@@ -10,8 +10,9 @@ Recommend daily or weekly outfits based on weather conditions, styled around ame
 ## Instructions
 
 1. **Get weather data** using MCP tools
-   - For today/current weather: use `get_weather`
+   - For today/current weather: use `get_weather` (use `feels_like` for outfit decisions)
    - For a specific future day: use `get_forecast` with the day parameter (e.g., "wednesday", "tomorrow")
+   - **For forecasts**: Use the **high temperature** (`temp_high_c`) for outfit decisions - this reflects daytime conditions. Ignore the overnight low (`temp_low_c`).
    - Assume Sydney unless user explicitly mentions another city
    - Never ask for location - just use Sydney by default
 
