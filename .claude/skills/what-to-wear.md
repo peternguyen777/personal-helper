@@ -61,11 +61,7 @@ Requires:
 | Humid (>70%) + warm (>25°C) | Prefer lightweight items, tees, open-weave fabrics |
 | Windy (>30 km/h) | Prefer structured outers over knit layers |
 
-6. **Use item links** (if available) to learn more about items:
-   - If an item has a Link and you need more details (e.g., material, care instructions, styling suggestions), use WebFetch to retrieve information from the link
-   - This is optional - only fetch when additional context would improve the recommendation
-
-7. **Format response** with your selected items:
+6. **Format response** with your selected items:
 
 > **Today in [City]**: [temp]°C (feels like [feels_like]°C), [conditions], [wind] km/h wind
 > **Time**: [current local time] - [context about when clothes will be worn]
@@ -77,6 +73,23 @@ Requires:
 > - **Outer layer** (if needed): [selected item from your wardrobe]
 >
 > **Styling notes**: [tips on how to wear the selected pieces together, color coordination, fit advice. Use item descriptions if available for additional context.]
+
+---
+
+## Item Details Mode
+
+When the user asks "tell me more about these items" or wants to know more about recommended pieces:
+
+1. **Use item links** to fetch additional context via WebFetch
+2. **Provide brief heritage/history** for each item (1-2 sentences):
+   - Brand origin and history
+   - What makes the item special (materials, construction, design details)
+   - Cultural significance or famous wearers (if relevant)
+3. **Keep it concise** - enough to appreciate the piece, not a full essay
+
+**Example format:**
+> **Breton Stripe Tee** (Saint James)
+> French naval heritage since 1858 - the 21 stripes represent Napoleon's victories. Saint James has made these in Normandy since 1889. 100% cotton jersey, worn by Picasso and James Dean.
 
 ---
 
