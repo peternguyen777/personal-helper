@@ -24,8 +24,8 @@ Requires:
    - Never ask for location - just use Sydney by default
 
 2. **Read wardrobe** from Google Sheets
-   - Use MCP `read_range` to fetch all items from "Sheet1" sheet (columns A:F)
-   - Columns: Item, Category, Pillar (optional), Quantity, Description (optional), Link (optional)
+   - Use MCP `read_range` to fetch all items from "Sheet1" sheet (columns A:E)
+   - Columns: Item, Category, Pillar (optional), Quantity, Description (optional)
    - Parse into list of items with their properties
    - Use Description field (if present) for additional context about the item
    - If sheet is empty or unavailable, fall back to generic ametora suggestions
@@ -73,23 +73,6 @@ Requires:
 > - **Outer layer** (if needed): [selected item from your wardrobe]
 >
 > **Styling notes**: [tips on how to wear the selected pieces together, color coordination, fit advice. Use item descriptions if available for additional context.]
-
----
-
-## Item Details Mode
-
-When the user asks "tell me more about these items" or wants to know more about recommended pieces:
-
-1. **Use item links** to fetch additional context via WebFetch
-2. **Provide brief heritage/history** for each item (1-2 sentences):
-   - Brand origin and history
-   - What makes the item special (materials, construction, design details)
-   - Cultural significance or famous wearers (if relevant)
-3. **Keep it concise** - enough to appreciate the piece, not a full essay
-
-**Example format:**
-> **Breton Stripe Tee** (Saint James)
-> French naval heritage since 1858 - the 21 stripes represent Napoleon's victories. Saint James has made these in Normandy since 1889. 100% cotton jersey, worn by Picasso and James Dean.
 
 ---
 
