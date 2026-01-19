@@ -41,10 +41,16 @@ Requires:
    - Filter your wardrobe items by that category
    - Select an item appropriate for the current conditions
    - Infer weather suitability from item names:
-     - Warm weather (21°C+): tees, camp collar shirts, lightweight items
-     - Mild weather (18-21°C): OCBDs, chambray, light layers
-     - Cool weather (under 18°C): heavier items, add outer layer
+     - Warm (24°C+): tee alone, or lightweight shirt alone
+     - Mild (20-24°C): tee + overshirt (worn open), or shirt alone
+     - Cool (15-20°C): shirt alone, or tee + outer
+     - Cold (under 15°C): tee + overshirt + outer
      - Rain likely: prioritize "waxed", "leather", water-resistant items
+
+   **Tee + overshirt layering:**
+   - Can recommend a white tee with an open button-up shirt (chambray, madras, OCBD) as a layered look
+   - Works especially well in mild weather when a single layer isn't quite enough
+   - Format as: "Whitesville tee + Buzz Rickson's chambray (unbuttoned)"
 
    **Outer layer logic:**
    - Skip Outer category if temp is 21°C+ and no rain expected
