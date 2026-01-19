@@ -1,7 +1,6 @@
 ---
 name: what-to-wear
 description: Use when asked "what should I wear today?", weekly outfit planning, or similar clothing questions
-model: sonnet
 ---
 
 # What to Wear Skill
