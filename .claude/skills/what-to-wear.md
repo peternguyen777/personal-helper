@@ -7,6 +7,13 @@ description: Use when asked "what should I wear today?", weekly outfit planning,
 
 Recommend daily or weekly outfits based on weather conditions, styled around ametora (Japanese Americana) aesthetics.
 
+## Prerequisites
+
+Requires:
+- `weather` MCP for weather data
+- `google-sheets-mcp` for wardrobe access
+- Google Sheet named "Wardrobe" with columns: Item, Category, Pillar
+
 ## Instructions
 
 1. **Get weather data** using MCP tools
@@ -16,40 +23,54 @@ Recommend daily or weekly outfits based on weather conditions, styled around ame
    - Assume Sydney unless user explicitly mentions another city
    - Never ask for location - just use Sydney by default
 
-2. **Consider the local time** (from the weather response)
+2. **Read wardrobe** from Google Sheets
+   - Use MCP `read_range` to fetch all items from "Wardrobe" sheet (columns A:C)
+   - Parse into list of items with their Category and Pillar
+   - If sheet is empty or unavailable, fall back to generic ametora suggestions
+
+3. **Consider the local time** (from the weather response)
    - The `local_time` field shows current day and time for the city
    - Morning commute vs afternoon vs evening can affect layering needs
    - If it's evening, consider tomorrow morning's weather may differ
 
-3. **Apply outfit logic** based on feels-like temperature:
+4. **Select outfit from wardrobe** based on weather:
 
-| Feels Like | Base Layer |
-|------------|------------|
-| 21°C+ | Oxford shirt, tee, camp collar shirt, or tee + overshirt |
-| 18-21°C | Add mid-layer: crew sweater, cardigan, or overshirt |
-| Under 18°C | Add outer layer: chore coat, deck jacket, MA-1, or field jacket |
+   For each category needed (Top, Bottom, Shoes, and optionally Outer):
+   - Filter your wardrobe items by that category
+   - Select an item appropriate for the current conditions
+   - Infer weather suitability from item names:
+     - Warm weather (21°C+): tees, camp collar shirts, lightweight items
+     - Mild weather (18-21°C): OCBDs, chambray, light layers
+     - Cool weather (under 18°C): heavier items, add outer layer
+     - Rain likely: prioritize "waxed", "leather", water-resistant items
 
-4. **Apply weather modifiers:**
+   **Outer layer logic:**
+   - Skip Outer category if temp is 21°C+ and no rain expected
+   - Include Outer if temp is under 21°C or rain chance > 40%
 
-| Condition | Adjustment |
-|-----------|------------|
-| Rain likely (>40%) | Water-resistant outer (waxed jacket, ventile), leather boots over canvas |
-| High UV (11+) | Suggest hat and sunglasses |
-| Humid (>70%) + warm (>25°C) | Favor open-weave cotton, looser fits |
-| Windy (>30 km/h) | Wind-blocking outers over knits |
+   **If category has no items:** Note the gap and suggest a generic ametora piece
 
-5. **Format response** with specific categories:
+5. **Apply weather modifiers** when selecting items:
+
+| Condition | Item Selection Preference |
+|-----------|--------------------------|
+| Rain likely (>40%) | Prefer items with "waxed", "leather", "ventile" in name; boots over canvas |
+| High UV (11+) | Suggest adding hat and sunglasses |
+| Humid (>70%) + warm (>25°C) | Prefer lightweight items, tees, open-weave fabrics |
+| Windy (>30 km/h) | Prefer structured outers over knit layers |
+
+6. **Format response** with your selected items:
 
 > **Today in [City]**: [temp]°C (feels like [feels_like]°C), [conditions], [wind] km/h wind
 > **Time**: [current local time] - [context about when clothes will be worn]
 >
 > **Outfit:**
-> - **Top**: [specific ametora top recommendation]
-> - **Bottom**: [specific ametora bottom recommendation]
-> - **Shoes**: [specific ametora footwear recommendation]
-> - **Outer layer** (optional): [if needed based on temperature/conditions]
+> - **Top**: [selected item from your wardrobe]
+> - **Bottom**: [selected item from your wardrobe]
+> - **Shoes**: [selected item from your wardrobe]
+> - **Outer layer** (if needed): [selected item from your wardrobe]
 >
-> **Styling notes**: [optional tips on fit, tucking, rolling sleeves/cuffs, color coordination, or how to wear the pieces together in ametora style]
+> **Styling notes**: [tips on how to wear the selected pieces together, color coordination, fit advice]
 
 ---
 
@@ -63,20 +84,14 @@ Use `get_forecast` for each day of the week (monday, tuesday, wednesday, thursda
 
 ### 2. Apply variety logic
 
-Rotate through options to avoid repetition:
-
-| Category | Rotation Pool |
-|----------|---------------|
-| **Tops** | OCBD → chambray → camp collar → tee → rugby shirt → pocket tee |
-| **Bottoms** | Chinos → fatigues → denim → lightweight trousers |
-| **Shoes** | Loafers → canvas sneakers → leather sneakers → work boots |
-| **Pillars** | Cycle through Ivy → Workwear → Military → Sportswear across the week |
+Using your wardrobe items, rotate through to avoid repetition:
 
 **Variety rules:**
-- Don't repeat the same top on consecutive days
-- Balance colors across the week (don't do navy top 3 days in a row)
+- Don't repeat the same item on consecutive days
+- Balance colors across the week (don't wear navy top 3 days in a row)
 - If weather is similar across days, vary by pillar to keep it interesting
 - Match outer layers to temperature needs, but vary style when possible
+- If you don't have enough variety in a category, it's OK to repeat after 2-3 days
 
 ### 3. Format weekly response
 
@@ -104,7 +119,7 @@ Rotate through options to avoid repetition:
 >
 > [continue for each day...]
 >
-> **Weekly Capsule Summary**: [List the key pieces needed for the week, e.g., "You'll need: 2 button-ups, 2 tees, 2 chinos, 1 denim, loafers, sneakers, and a light jacket for Wednesday's rain"]
+> **Weekly Capsule Summary**: [List which of YOUR items you'll use this week, noting if any category is limited, e.g., "This week you'll wear: 3 of your 4 tops, both chinos, and your loafers and sneakers. Consider adding another outer layer option for rainy days."]
 
 ---
 
