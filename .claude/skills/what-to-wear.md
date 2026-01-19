@@ -24,8 +24,10 @@ Requires:
    - Never ask for location - just use Sydney by default
 
 2. **Read wardrobe** from Google Sheets
-   - Use MCP `read_range` to fetch all items from "Sheet1" sheet (columns A:C)
-   - Parse into list of items with their Category and Pillar
+   - Use MCP `read_range` to fetch all items from "Sheet1" sheet (columns A:F)
+   - Columns: Item, Category, Pillar (optional), Quantity, Description (optional), Link (optional)
+   - Parse into list of items with their properties
+   - Use Description field (if present) for additional context about the item
    - If sheet is empty or unavailable, fall back to generic ametora suggestions
 
 3. **Consider the local time** (from the weather response)
@@ -59,7 +61,11 @@ Requires:
 | Humid (>70%) + warm (>25°C) | Prefer lightweight items, tees, open-weave fabrics |
 | Windy (>30 km/h) | Prefer structured outers over knit layers |
 
-6. **Format response** with your selected items:
+6. **Use item links** (if available) to learn more about items:
+   - If an item has a Link and you need more details (e.g., material, care instructions, styling suggestions), use WebFetch to retrieve information from the link
+   - This is optional - only fetch when additional context would improve the recommendation
+
+7. **Format response** with your selected items:
 
 > **Today in [City]**: [temp]°C (feels like [feels_like]°C), [conditions], [wind] km/h wind
 > **Time**: [current local time] - [context about when clothes will be worn]
@@ -70,7 +76,7 @@ Requires:
 > - **Shoes**: [selected item from your wardrobe]
 > - **Outer layer** (if needed): [selected item from your wardrobe]
 >
-> **Styling notes**: [tips on how to wear the selected pieces together, color coordination, fit advice]
+> **Styling notes**: [tips on how to wear the selected pieces together, color coordination, fit advice. Use item descriptions if available for additional context.]
 
 ---
 
