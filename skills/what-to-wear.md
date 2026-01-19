@@ -24,7 +24,7 @@ Recommend daily or weekly outfits based on weather conditions, styled around ame
 
 | Feels Like | Base Layer |
 |------------|------------|
-| 21°C+ | Oxford shirt, tee, or camp collar shirt |
+| 21°C+ | Oxford shirt, tee, camp collar shirt, or tee + overshirt |
 | 18-21°C | Add mid-layer: crew sweater, cardigan, or overshirt |
 | Under 18°C | Add outer layer: chore coat, deck jacket, MA-1, or field jacket |
 
