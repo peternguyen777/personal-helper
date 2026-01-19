@@ -9,10 +9,11 @@ Recommend daily outfits based on weather conditions, styled around ametora (Japa
 
 ## Instructions
 
-1. **Get weather data** using the `get_weather` MCP tool
+1. **Get weather data** using MCP tools
+   - For today/current weather: use `get_weather`
+   - For a specific future day: use `get_forecast` with the day parameter (e.g., "wednesday", "tomorrow")
    - Assume Sydney unless user explicitly mentions another city
    - Never ask for location - just use Sydney by default
-   - The response includes `local_time` for that city
 
 2. **Consider the local time** (from the weather response)
    - The `local_time` field shows current day and time for the city

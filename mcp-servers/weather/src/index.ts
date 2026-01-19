@@ -14,16 +14,27 @@ interface WeatherResponse {
   conditions: string;
 }
 
-// Australian city BOM station IDs with timezones
-const BOM_STATIONS: Record<string, { id: string; wmo: string; timezone: string }> = {
-  sydney: { id: "IDN60901", wmo: "94768", timezone: "Australia/Sydney" },
-  melbourne: { id: "IDV60901", wmo: "94866", timezone: "Australia/Melbourne" },
-  brisbane: { id: "IDQ60901", wmo: "94576", timezone: "Australia/Brisbane" },
-  perth: { id: "IDW60901", wmo: "94608", timezone: "Australia/Perth" },
-  adelaide: { id: "IDS60901", wmo: "94672", timezone: "Australia/Adelaide" },
-  canberra: { id: "IDN60903", wmo: "94926", timezone: "Australia/Sydney" },
-  hobart: { id: "IDT60901", wmo: "94970", timezone: "Australia/Hobart" },
-  darwin: { id: "IDD60901", wmo: "94120", timezone: "Australia/Darwin" },
+interface ForecastResponse {
+  city: string;
+  date: string;
+  day_name: string;
+  temp_high_c: number;
+  temp_low_c: number;
+  rain_chance_percent: number;
+  uv_index: number;
+  conditions: string;
+}
+
+// Australian city BOM station IDs with timezones and coordinates (for forecasts)
+const BOM_STATIONS: Record<string, { id: string; wmo: string; timezone: string; lat: number; lon: number }> = {
+  sydney: { id: "IDN60901", wmo: "94768", timezone: "Australia/Sydney", lat: -33.8688, lon: 151.2093 },
+  melbourne: { id: "IDV60901", wmo: "94866", timezone: "Australia/Melbourne", lat: -37.8136, lon: 144.9631 },
+  brisbane: { id: "IDQ60901", wmo: "94576", timezone: "Australia/Brisbane", lat: -27.4698, lon: 153.0251 },
+  perth: { id: "IDW60901", wmo: "94608", timezone: "Australia/Perth", lat: -31.9505, lon: 115.8605 },
+  adelaide: { id: "IDS60901", wmo: "94672", timezone: "Australia/Adelaide", lat: -34.9285, lon: 138.6007 },
+  canberra: { id: "IDN60903", wmo: "94926", timezone: "Australia/Sydney", lat: -35.2809, lon: 149.1300 },
+  hobart: { id: "IDT60901", wmo: "94970", timezone: "Australia/Hobart", lat: -42.8821, lon: 147.3272 },
+  darwin: { id: "IDD60901", wmo: "94120", timezone: "Australia/Darwin", lat: -12.4634, lon: 130.8456 },
 };
 
 // Major city coordinates for Open-Meteo with timezones
@@ -165,6 +176,119 @@ async function getWeather(city: string): Promise<WeatherResponse> {
   );
 }
 
+// Map day names to days ahead (0 = today)
+function parseDayToDaysAhead(day: string, timezone: string): number {
+  const dayLower = day.toLowerCase().trim();
+
+  // Handle "today" and "tomorrow"
+  if (dayLower === "today") return 0;
+  if (dayLower === "tomorrow") return 1;
+
+  // Handle day names
+  const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+  const targetDayIndex = dayNames.indexOf(dayLower);
+
+  if (targetDayIndex === -1) {
+    throw new Error(`Invalid day: ${day}. Use day names (monday, tuesday, etc.) or "today"/"tomorrow".`);
+  }
+
+  // Get current day in the city's timezone
+  const now = new Date();
+  const cityDate = new Date(now.toLocaleString("en-US", { timeZone: timezone }));
+  const currentDayIndex = cityDate.getDay();
+
+  // Calculate days ahead (wrap around if needed)
+  let daysAhead = targetDayIndex - currentDayIndex;
+  if (daysAhead <= 0) {
+    daysAhead += 7; // Next week
+  }
+
+  // Limit to 7-day forecast
+  if (daysAhead > 7) {
+    throw new Error("Forecast only available for the next 7 days.");
+  }
+
+  return daysAhead;
+}
+
+async function getForecast(city: string, day: string): Promise<ForecastResponse> {
+  const normalizedCity = city.toLowerCase().trim();
+
+  // Get coordinates and timezone
+  let lat: number, lon: number, timezone: string;
+
+  if (BOM_STATIONS[normalizedCity]) {
+    const station = BOM_STATIONS[normalizedCity];
+    lat = station.lat;
+    lon = station.lon;
+    timezone = station.timezone;
+  } else if (CITY_COORDS[normalizedCity]) {
+    const coords = CITY_COORDS[normalizedCity];
+    lat = coords.lat;
+    lon = coords.lon;
+    timezone = coords.timezone;
+  } else {
+    throw new Error(
+      `Unknown city: ${city}. Supported Australian cities: ${Object.keys(BOM_STATIONS).join(", ")}. Supported international cities: ${Object.keys(CITY_COORDS).join(", ")}`
+    );
+  }
+
+  const daysAhead = parseDayToDaysAhead(day, timezone);
+
+  // Fetch forecast from Open-Meteo
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max,weather_code&timezone=auto&forecast_days=8`;
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Open-Meteo API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const daily = data.daily;
+
+  // WMO weather codes
+  const weatherCodes: Record<number, string> = {
+    0: "Clear sky",
+    1: "Mainly clear",
+    2: "Partly cloudy",
+    3: "Overcast",
+    45: "Foggy",
+    48: "Depositing rime fog",
+    51: "Light drizzle",
+    53: "Moderate drizzle",
+    55: "Dense drizzle",
+    61: "Slight rain",
+    63: "Moderate rain",
+    65: "Heavy rain",
+    71: "Slight snow",
+    73: "Moderate snow",
+    75: "Heavy snow",
+    80: "Slight rain showers",
+    81: "Moderate rain showers",
+    82: "Violent rain showers",
+    95: "Thunderstorm",
+    96: "Thunderstorm with slight hail",
+    99: "Thunderstorm with heavy hail",
+  };
+
+  const forecastDate = new Date(daily.time[daysAhead]);
+  const dayName = forecastDate.toLocaleDateString("en-AU", { weekday: "long" });
+
+  return {
+    city: city
+      .split(" ")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" "),
+    date: daily.time[daysAhead],
+    day_name: dayName,
+    temp_high_c: Math.round(daily.temperature_2m_max[daysAhead]),
+    temp_low_c: Math.round(daily.temperature_2m_min[daysAhead]),
+    rain_chance_percent: daily.precipitation_probability_max[daysAhead] || 0,
+    uv_index: Math.round(daily.uv_index_max[daysAhead] || 0),
+    conditions: weatherCodes[daily.weather_code[daysAhead]] || "Unknown",
+  };
+}
+
 // Create MCP server
 const server = new McpServer({
   name: "weather",
@@ -190,6 +314,43 @@ server.tool(
           {
             type: "text" as const,
             text: JSON.stringify(weather, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+);
+
+// Register the get_forecast tool
+server.tool(
+  "get_forecast",
+  "Get weather forecast for a specific day. Returns high/low temperatures, rain chance, UV index, and conditions. Use for future weather queries.",
+  {
+    city: z
+      .string()
+      .describe("City name (e.g., 'Sydney', 'Tokyo'). Defaults to Sydney."),
+    day: z
+      .string()
+      .describe("Day to get forecast for: 'today', 'tomorrow', or a day name (e.g., 'wednesday', 'friday')."),
+  },
+  async ({ city, day }) => {
+    try {
+      const forecast = await getForecast(city || "sydney", day);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(forecast, null, 2),
           },
         ],
       };
