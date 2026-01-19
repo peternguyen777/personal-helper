@@ -24,7 +24,7 @@ Requires:
    - Never ask for location - just use Sydney by default
 
 2. **Read wardrobe** from Google Sheets
-   - Use MCP `read_range` to fetch all items from "Wardrobe" sheet (columns A:C)
+   - Use MCP `read_range` to fetch all items from "Sheet1" sheet (columns A:C)
    - Parse into list of items with their Category and Pillar
    - If sheet is empty or unavailable, fall back to generic ametora suggestions
 
