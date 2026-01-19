@@ -35,7 +35,7 @@ Recommend daily or weekly outfits based on weather conditions, styled around ame
 |-----------|------------|
 | Rain likely (>40%) | Water-resistant outer (waxed jacket, ventile), leather boots over canvas |
 | High UV (11+) | Suggest hat and sunglasses |
-| Humid (>70%) + warm (>25°C) | Favor linen, open-weave cotton, looser fits |
+| Humid (>70%) + warm (>25°C) | Favor open-weave cotton, looser fits |
 | Windy (>30 km/h) | Wind-blocking outers over knits |
 
 5. **Format response** with specific categories:
@@ -68,7 +68,7 @@ Rotate through options to avoid repetition:
 | Category | Rotation Pool |
 |----------|---------------|
 | **Tops** | OCBD → chambray → camp collar → tee → rugby shirt → pocket tee |
-| **Bottoms** | Chinos → fatigues → denim → linen trousers |
+| **Bottoms** | Chinos → fatigues → denim → lightweight trousers |
 | **Shoes** | Loafers → canvas sneakers → leather sneakers → work boots |
 | **Pillars** | Cycle through Ivy → Workwear → Military → Sportswear across the week |
 
@@ -120,7 +120,7 @@ Ametora ("American traditional") is how Japan reinterpreted American style. Draw
 | **Sportswear** | Athletic heritage, casual | Coach's jackets, track tops, rugby shirts, sneakers |
 
 **Key principles:**
-- Natural materials (cotton, wool, leather, linen)
+- Natural materials (cotton, wool, leather)
 - Relaxed but intentional fit
 - Muted, earthy tones - navy, olive, tan, cream, brown
 - Pieces that age well and develop character
