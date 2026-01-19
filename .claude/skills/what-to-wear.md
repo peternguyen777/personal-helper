@@ -17,9 +17,12 @@ Requires:
 ## Instructions
 
 1. **Get weather data** using MCP tools
-   - For today/current weather: use `get_weather` (use `feels_like` for outfit decisions)
+   - **Always fetch both** `get_weather` (for current conditions, humidity, wind, local time) AND `get_forecast` for today (for the high temp)
+   - **Which temperature to use for outfit decisions:**
+     - Morning (before 12pm): Use the forecast high (`temp_high_c`) — dress for the warmest part of the day ahead
+     - Afternoon/Evening (12pm onwards): Use current conditions (`feels_like_c`) — the day's peak has passed
+   - Use `get_weather` data for humidity, wind, and current conditions regardless of time
    - For a specific future day: use `get_forecast` with the day parameter (e.g., "wednesday", "tomorrow")
-   - **For forecasts**: Use the **high temperature** (`temp_high_c`) for outfit decisions - this reflects daytime conditions. Ignore the overnight low (`temp_low_c`).
    - Assume Sydney unless user explicitly mentions another city
    - Never ask for location - just use Sydney by default
 
@@ -64,7 +67,7 @@ Requires:
 |-----------|--------------------------|
 | Rain likely (>40%) | Prefer items with "waxed", "leather", "ventile" in name; boots over canvas |
 | High UV (11+) | Suggest adding hat and sunglasses |
-| Humid (>70%) + warm (>25°C) | Prefer lightweight items, tees, open-weave fabrics |
+| Humid (>80%) + mild/warm (>20°C) | Prefer lightweight items, tees, open-weave fabrics; skip outer layers |
 | Windy (>30 km/h) | Prefer structured outers over knit layers |
 
 6. **Format response** with your selected items:
