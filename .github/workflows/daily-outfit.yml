@@ -1,0 +1,40 @@
+name: Daily Outfit SMS
+
+on:
+  schedule:
+    # 7am Sydney time
+    # Sydney is UTC+11 (AEDT, Oct-Apr) or UTC+10 (AEST, Apr-Oct)
+    # Using 20:00 UTC = 7am AEDT (summer) / 6am AEST (winter)
+    # Using 21:00 UTC = 8am AEDT (summer) / 7am AEST (winter)
+    # Compromise: 20:00 UTC gives 7am in summer, 6am in winter
+    - cron: '0 20 * * *'
+
+  # Allow manual trigger for testing
+  workflow_dispatch:
+
+jobs:
+  send-outfit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install anthropic gspread google-auth twilio requests
+
+      - name: Send daily outfit SMS
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TWILIO_FROM_NUMBER: ${{ secrets.TWILIO_FROM_NUMBER }}
+          MY_PHONE_NUMBER: ${{ secrets.MY_PHONE_NUMBER }}
+        run: python scripts/daily_outfit.py
