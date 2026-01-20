@@ -137,17 +137,23 @@ Format (use actual line breaks):
 {weather['date_formatted']}, Sydney
 [temp]°C, [humidity]% humidity, [conditions]
 
-[Top] + [Bottom] + [Shoes]
-[Accessory if appropriate]
+Top: [item]
+Bottom: [item]
+Shoes: [item]
+Accessory: [item if appropriate]
 
 [One styling tip.]
+
+REQUIRED: Always include Top, Bottom, and Shoes with their labels.
 
 Example:
 Tuesday 20 Jan, Sydney
 25°C, 72% humidity, partly cloudy
 
-Chambray + Olive Fatigues + Paraboot Michael
-Tochigi belt
+Top: Chambray
+Bottom: Olive Fatigues
+Shoes: Paraboot Michael
+Accessory: Tochigi belt
 
 Workwear-military mix, perfect for mild temps.
 
