@@ -9,6 +9,7 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import anthropic
 import gspread
@@ -67,8 +68,8 @@ def fetch_weather() -> dict:
         "low_c": daily["temperature_2m_min"][0],
         "daily_rain_chance_percent": daily["precipitation_probability_max"][0],
         "uv_index": daily["uv_index_max"][0],
-        "local_time": datetime.now().strftime("%I:%M %p"),
-        "date_formatted": datetime.now().strftime("%A %-d %b")
+        "local_time": datetime.now(ZoneInfo("Australia/Sydney")).strftime("%I:%M %p"),
+        "date_formatted": datetime.now(ZoneInfo("Australia/Sydney")).strftime("%A %-d %b")
     }
 
 
