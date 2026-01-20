@@ -189,7 +189,7 @@ Use actual item names from my wardrobe. Plain text only, no markdown."""
     message = client.messages.create(
         model="claude-sonnet-4-20250514",
         max_tokens=200,
-        temperature=1.2,
+        temperature=1.0,
         messages=[{"role": "user", "content": prompt}]
     )
 
