@@ -13,7 +13,12 @@ if (!CLIENT_ID || !CLIENT_SECRET) {
   process.exit(1);
 }
 
-const PORT = new URL(REDIRECT_URI).port || 3000;
+const PORT = parseInt(new URL(REDIRECT_URI).port, 10) || 3000;
+
+function escapeHtml(text: string): string {
+  return text.replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] || c));
+}
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || "", `http://localhost:${PORT}`);
@@ -24,7 +29,7 @@ const server = createServer(async (req, res) => {
 
     if (error) {
       res.writeHead(400, { "Content-Type": "text/html" });
-      res.end(`<h1>Error</h1><p>${error}</p>`);
+      res.end(`<h1>Error</h1><p>${escapeHtml(error)}</p>`);
       server.close();
       process.exit(1);
     }
@@ -39,10 +44,15 @@ const server = createServer(async (req, res) => {
         process.exit(0);
       } catch (err) {
         res.writeHead(500, { "Content-Type": "text/html" });
-        res.end(`<h1>Error</h1><p>${err}</p>`);
+        res.end(`<h1>Error</h1><p>${escapeHtml(String(err))}</p>`);
         server.close();
         process.exit(1);
       }
+    } else {
+      res.writeHead(400, { "Content-Type": "text/html" });
+      res.end("<h1>Error</h1><p>Missing authorization code</p>");
+      server.close();
+      process.exit(1);
     }
   }
 
