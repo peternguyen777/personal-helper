@@ -3,6 +3,20 @@ import { loadTokens, isTokenValid, LinkedInTokens } from "./auth.js";
 const API_BASE = "https://api.linkedin.com/v2";
 const API_REST = "https://api.linkedin.com/rest";
 
+interface LinkedInPostResponse {
+  id: string;
+  commentary?: string;
+  createdAt?: number;
+}
+
+function getValidTokens(): LinkedInTokens {
+  const tokens = loadTokens();
+  if (!isTokenValid(tokens)) {
+    throw new Error("Not authenticated. Run 'npm run auth' to connect LinkedIn.");
+  }
+  return tokens!;
+}
+
 function getHeaders(tokens: LinkedInTokens): Record<string, string> {
   return {
     Authorization: `Bearer ${tokens.access_token}`,
@@ -13,13 +27,10 @@ function getHeaders(tokens: LinkedInTokens): Record<string, string> {
 }
 
 export async function getProfile(): Promise<{ sub: string; name: string }> {
-  const tokens = loadTokens();
-  if (!isTokenValid(tokens)) {
-    throw new Error("Not authenticated. Run 'npm run auth' to connect LinkedIn.");
-  }
+  const tokens = getValidTokens();
 
-  const response = await fetch("https://api.linkedin.com/v2/userinfo", {
-    headers: { Authorization: `Bearer ${tokens!.access_token}` },
+  const response = await fetch(`${API_BASE}/userinfo`, {
+    headers: { Authorization: `Bearer ${tokens.access_token}` },
   });
 
   if (!response.ok) {
@@ -30,17 +41,14 @@ export async function getProfile(): Promise<{ sub: string; name: string }> {
 }
 
 export async function createTextPost(text: string): Promise<{ id: string; url: string }> {
-  const tokens = loadTokens();
-  if (!isTokenValid(tokens)) {
-    throw new Error("Not authenticated. Run 'npm run auth' to connect LinkedIn.");
-  }
+  const tokens = getValidTokens();
 
   const profile = await getProfile();
   const authorUrn = `urn:li:person:${profile.sub}`;
 
   const response = await fetch(`${API_REST}/posts`, {
     method: "POST",
-    headers: getHeaders(tokens!),
+    headers: getHeaders(tokens),
     body: JSON.stringify({
       author: authorUrn,
       commentary: text,
@@ -69,10 +77,7 @@ export async function createTextPost(text: string): Promise<{ id: string; url: s
 export async function getPostAnalytics(
   postId: string
 ): Promise<{ impressions: number; likes: number; comments: number; shares: number }> {
-  const tokens = loadTokens();
-  if (!isTokenValid(tokens)) {
-    throw new Error("Not authenticated. Run 'npm run auth' to connect LinkedIn.");
-  }
+  getValidTokens();
 
   // LinkedIn's analytics API requires specific permissions
   // For now, return placeholder - full implementation needs r_organization_social or similar
@@ -85,10 +90,7 @@ export async function getPostAnalytics(
 }
 
 export async function listRecentPosts(): Promise<Array<{ id: string; text: string; created: string }>> {
-  const tokens = loadTokens();
-  if (!isTokenValid(tokens)) {
-    throw new Error("Not authenticated. Run 'npm run auth' to connect LinkedIn.");
-  }
+  const tokens = getValidTokens();
 
   const profile = await getProfile();
   const authorUrn = `urn:li:person:${profile.sub}`;
@@ -96,7 +98,7 @@ export async function listRecentPosts(): Promise<Array<{ id: string; text: strin
   const response = await fetch(
     `${API_REST}/posts?author=${encodeURIComponent(authorUrn)}&q=author&count=10`,
     {
-      headers: getHeaders(tokens!),
+      headers: getHeaders(tokens),
     }
   );
 
@@ -106,7 +108,7 @@ export async function listRecentPosts(): Promise<Array<{ id: string; text: strin
   }
 
   const data = await response.json();
-  return (data.elements || []).map((post: any) => ({
+  return (data.elements || []).map((post: LinkedInPostResponse) => ({
     id: post.id,
     text: post.commentary?.substring(0, 100) || "",
     created: post.createdAt ? new Date(post.createdAt).toISOString() : "unknown",
