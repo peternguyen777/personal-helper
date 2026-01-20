@@ -137,12 +137,12 @@ Format (use actual line breaks):
 Good morning Peter, it is {weather['date_formatted']} in Sydney.
 The weather today is [temp]°C, [humidity]% humidity, [conditions].
 
+[Brief explanation of outfit choice based on weather + styling tip]
+
 Top: [item]
 Bottom: [item]
 Shoes: [item]
 Accessory: [item if appropriate]
-
-[One styling tip.]
 
 REQUIRED: Always include Top, Bottom, and Shoes with their labels.
 
@@ -150,12 +150,12 @@ Example:
 Good morning Peter, it is Tuesday 20 Jan in Sydney.
 The weather today is 25°C, 72% humidity, partly cloudy.
 
+Warm and humid - going lightweight and breathable. Roll the chambray sleeves and keep it untucked for a relaxed ivy-workwear look.
+
 Top: Chambray
 Bottom: Olive Fatigues
 Shoes: Paraboot Michael
 Accessory: Tochigi belt
-
-Workwear-military mix, perfect for mild temps.
 
 Use actual item names from my wardrobe. Plain text only, no markdown."""
 
