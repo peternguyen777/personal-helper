@@ -128,13 +128,27 @@ UV index: {weather['uv_index']}
 {wardrobe_text}
 </wardrobe>
 
-Give me today's outfit recommendation. Keep under 350 characters for SMS.
+Give me today's outfit recommendation. Keep under 400 characters for SMS. Use line breaks for readability.
 
-Format: [Day D Mon], Sydney - [temp]°C, [humidity]% humidity, [conditions]. [Top] + [Bottom] + [Shoes]. [Outer if needed]. [Accessory if appropriate]. [One styling tip.]
+Format (use actual line breaks):
+[Day D Mon], Sydney
+[temp]°C, [humidity]% humidity, [conditions]
 
-Example format: "Tuesday 20 Jan, Sydney - 25°C, 72% humidity, partly cloudy..."
+[Top] + [Bottom] + [Shoes]
+[Accessory if appropriate]
 
-Use actual item names from my wardrobe. No markdown, no bullet points, plain text only."""
+[One styling tip.]
+
+Example:
+Tuesday 20 Jan, Sydney
+25°C, 72% humidity, partly cloudy
+
+Chambray + Olive Fatigues + Paraboot Michael
+Tochigi belt
+
+Workwear-military mix, perfect for mild temps.
+
+Use actual item names from my wardrobe. Plain text only, no markdown."""
 
     message = client.messages.create(
         model="claude-sonnet-4-20250514",
@@ -143,8 +157,8 @@ Use actual item names from my wardrobe. No markdown, no bullet points, plain tex
     )
 
     response = message.content[0].text
-    # Cap at 450 chars (3 SMS segments) to fit full recommendation
-    max_len = 450
+    # Cap at 480 chars (3 SMS segments) to fit full recommendation with line breaks
+    max_len = 480
     if len(response) > max_len:
         response = response[:max_len - 3] + "..."
     return response
@@ -170,9 +184,17 @@ def send_sms(message: str) -> None:
 
 
 def main():
+    # Debug: Show timezone calculation
+    sydney_now = datetime.now(ZoneInfo("Australia/Sydney"))
+    utc_now = datetime.now(ZoneInfo("UTC"))
+    print(f"UTC time: {utc_now.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Sydney time: {sydney_now.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Date formatted: {sydney_now.strftime('%A %-d %b')}")
+
     print("Fetching weather...")
     weather = fetch_weather()
     print(f"Weather: {weather['temperature_c']}°C, {weather['conditions']}")
+    print(f"Weather date_formatted: {weather['date_formatted']}")
 
     print("Fetching wardrobe...")
     wardrobe = fetch_wardrobe()
