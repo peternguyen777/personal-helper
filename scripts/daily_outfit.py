@@ -126,18 +126,23 @@ UV index: {weather['uv_index']}
 {wardrobe_text}
 </wardrobe>
 
-Give me today's outfit recommendation. Keep it concise for SMS - under 280 characters. Format like:
-[temp]°C, [conditions]. [Top] + [Bottom] + [Shoes]. [Optional: outer layer]. [One short styling tip or note].
+Give me today's outfit recommendation. CRITICAL: Keep under 150 characters total for SMS.
 
-Use the actual item names from my wardrobe. No markdown, no bullet points, just plain text."""
+Format: [temp]°C [conditions]. [Top] + [Bottom] + [Shoes].
+
+Use short item names. No outer layer unless cold. No styling notes. No markdown."""
 
     message = client.messages.create(
         model="claude-sonnet-4-20250514",
-        max_tokens=200,
+        max_tokens=60,
         messages=[{"role": "user", "content": prompt}]
     )
 
-    return message.content[0].text
+    response = message.content[0].text
+    # Truncate to 160 chars if needed (SMS limit for trial accounts)
+    if len(response) > 160:
+        response = response[:157] + "..."
+    return response
 
 
 def send_sms(message: str) -> None:
