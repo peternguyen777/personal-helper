@@ -114,6 +114,7 @@ def get_outfit_recommendation(weather: dict, wardrobe: list[dict], skill: str) -
 
 <weather>
 Location: Sydney
+Date: {weather['date_formatted']}
 Local time: {weather['local_time']}
 Current temperature: {weather['temperature_c']}°C (feels like {weather['feels_like_c']}°C)
 Today's high: {weather['high_c']}°C
@@ -130,8 +131,10 @@ UV index: {weather['uv_index']}
 
 Give me today's outfit recommendation. Keep under 400 characters for SMS. Use line breaks for readability.
 
+IMPORTANT: Use the exact date from the weather data above (Date: {weather['date_formatted']}).
+
 Format (use actual line breaks):
-[Day D Mon], Sydney
+{weather['date_formatted']}, Sydney
 [temp]°C, [humidity]% humidity, [conditions]
 
 [Top] + [Bottom] + [Shoes]
