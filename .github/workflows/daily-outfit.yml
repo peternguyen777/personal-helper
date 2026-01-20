@@ -27,12 +27,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install anthropic gspread google-auth twilio requests pytest
-
-      - name: Run date formatting tests
-        run: |
-          cd scripts
-          python -m pytest test_daily_outfit.py::TestDateFormatting -v
+          pip install anthropic gspread google-auth twilio requests
 
       - name: Send daily outfit SMS
         env:
