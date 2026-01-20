@@ -148,27 +148,7 @@ REQUIRED: Always include Top, Bottom, and Shoes with their labels.
 
 LAYERING OPTION: In mild weather (20-24°C), you can recommend a white tee as an underlayer with an unbuttoned shirt. Format as "Top: [tee] + [shirt] (unbuttoned)"
 
-Example 1:
-Good morning Peter, it is Tuesday 20 Jan in Sydney.
-The weather today is 25°C, 72% humidity, partly cloudy.
-
-Warm and humid - going lightweight and breathable. Roll the chambray sleeves and keep it untucked for a relaxed ivy-workwear look.
-
-Top: Chambray
-Bottom: Olive Fatigues
-Shoes: Paraboot Michael
-Accessory: Tochigi belt
-
-Example 2 (layered):
-Good morning Peter, it is Wednesday 21 Jan in Sydney.
-The weather today is 22°C, 65% humidity, overcast.
-
-Perfect layering weather - white tee under open chambray adds depth without overheating. Classic ametora combo.
-
-Top: Whitesville Tee + Sugar Cane Chambray (unbuttoned)
-Bottom: Burgus Plus Fatigue Pants (Navy)
-Shoes: Paraboot Michael (Brown)
-Accessory: Warehouse Slim Belt (Black)
+IMPORTANT: Vary your recommendations! Don't default to the same items. Consider the full wardrobe and pick pieces that suit today's specific weather conditions.
 
 Use actual item names from my wardrobe. Plain text only, no markdown."""
 
