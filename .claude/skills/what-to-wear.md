@@ -40,7 +40,7 @@ Requires:
 
 4. **Select outfit from wardrobe** based on weather:
 
-   For each category needed (Top, Bottom, Shoes, and optionally Outer):
+   For each category needed (Top, Bottom, Shoes, optionally Outer, and optionally Accessory):
    - Filter your wardrobe items by that category
    - Select an item appropriate for the current conditions
    - Infer weather suitability from item names:
@@ -56,8 +56,17 @@ Requires:
    - Format as: "Whitesville tee + Buzz Rickson's chambray (unbuttoned)"
 
    **Outer layer logic:**
-   - Skip Outer category if temp is 21°C+ and no rain expected
-   - Include Outer if temp is under 21°C or rain chance > 40%
+   - Skip Outer category if temp is 21°C+
+   - Include Outer only if temp is under 21°C
+
+   **Accessory logic:**
+   - Suggest a cap/hat when UV is high (8+) or for added style
+   - Suggest a belt that complements the outfit's pillar (e.g., leather belt with workwear, woven belt with ivy)
+   - Accessories are optional - only include when they genuinely enhance the outfit
+
+   **Rain chance - which value to use:**
+   - Morning/midday: Use forecast `rain_chance_percent` — the day is ahead
+   - Evening (after 5pm): Use current conditions `rain_chance_percent` — daily forecast window has mostly passed
 
    **If category has no items:** Note the gap and suggest a generic ametora piece
 
@@ -80,6 +89,7 @@ Requires:
 > - **Bottom**: [selected item from your wardrobe]
 > - **Shoes**: [selected item from your wardrobe]
 > - **Outer layer** (if needed): [selected item from your wardrobe]
+> - **Accessory** (if appropriate): [selected item from your wardrobe - cap, belt, etc.]
 >
 > **Styling notes**: [tips on how to wear the selected pieces together, color coordination, fit advice. Use item descriptions if available for additional context.]
 
@@ -120,6 +130,7 @@ Using your wardrobe items, rotate through to avoid repetition:
 > - **Top**: Chambray shirt
 > - **Bottom**: Tan chinos
 > - **Shoes**: Penny loafers
+> - **Accessory**: Navy baseball cap (sun protection)
 > - **Notes**: [brief styling note]
 >
 > **Tuesday** - 22°C, overcast
@@ -162,5 +173,6 @@ Ametora ("American traditional") is how Japan reinterpreted American style. Draw
 > - **Bottom**: Olive fatigues
 > - **Shoes**: Leather work boots
 > - **Outer layer**: Navy deck jacket
+> - **Accessory**: Tochigi leather belt
 >
 > **Styling notes**: Military bottoms with a workwear top and ivy-influenced outerwear - classic ametora mixing. Keep the chambray untucked for a relaxed silhouette. The deck jacket handles the wind while staying casual.

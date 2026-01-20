@@ -67,7 +67,8 @@ def fetch_weather() -> dict:
         "low_c": daily["temperature_2m_min"][0],
         "daily_rain_chance_percent": daily["precipitation_probability_max"][0],
         "uv_index": daily["uv_index_max"][0],
-        "local_time": datetime.now().strftime("%I:%M %p")
+        "local_time": datetime.now().strftime("%I:%M %p"),
+        "day_of_week": datetime.now().strftime("%A")
     }
 
 
@@ -126,21 +127,21 @@ UV index: {weather['uv_index']}
 {wardrobe_text}
 </wardrobe>
 
-Give me today's outfit recommendation. Keep under 300 characters for SMS.
+Give me today's outfit recommendation. Keep under 350 characters for SMS.
 
-Format: [temp]°C, [conditions]. [Top] + [Bottom] + [Shoes]. [Outer if needed]. [One styling tip.]
+Format: [Day], Sydney - [temp]°C, [humidity]% humidity, [conditions]. [Top] + [Bottom] + [Shoes]. [Outer if needed]. [Accessory if appropriate]. [One styling tip.]
 
 Use actual item names from my wardrobe. No markdown, no bullet points, plain text only."""
 
     message = client.messages.create(
         model="claude-sonnet-4-20250514",
-        max_tokens=150,
+        max_tokens=200,
         messages=[{"role": "user", "content": prompt}]
     )
 
     response = message.content[0].text
-    # Cap at 320 chars (2 SMS segments) to keep costs reasonable
-    max_len = 320
+    # Cap at 450 chars (3 SMS segments) to fit full recommendation
+    max_len = 450
     if len(response) > max_len:
         response = response[:max_len - 3] + "..."
     return response
