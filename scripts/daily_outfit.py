@@ -139,9 +139,11 @@ Use short item names. No outer layer unless cold. No styling notes. No markdown.
     )
 
     response = message.content[0].text
-    # Truncate to 160 chars if needed (SMS limit for trial accounts)
-    if len(response) > 160:
-        response = response[:157] + "..."
+    # Twilio trial prepends ~42 chars: "Sent from your Twilio trial account - "
+    # So we need to keep our message under ~115 chars to stay in one segment
+    max_len = 115
+    if len(response) > max_len:
+        response = response[:max_len - 3] + "..."
     return response
 
 
@@ -152,11 +154,16 @@ def send_sms(message: str) -> None:
         os.environ["TWILIO_AUTH_TOKEN"]
     )
 
-    client.messages.create(
-        body=message,
-        from_=os.environ["TWILIO_FROM_NUMBER"],
-        to=os.environ["MY_PHONE_NUMBER"]
-    )
+    try:
+        result = client.messages.create(
+            body=message,
+            from_=os.environ["TWILIO_FROM_NUMBER"],
+            to=os.environ["MY_PHONE_NUMBER"]
+        )
+        print(f"SMS sent successfully! SID: {result.sid}, Status: {result.status}")
+    except Exception as e:
+        print(f"SMS failed: {e}")
+        raise
 
 
 def main():
@@ -173,7 +180,7 @@ def main():
 
     print("Getting recommendation from Claude...")
     recommendation = get_outfit_recommendation(weather, wardrobe, skill)
-    print(f"Recommendation: {recommendation}")
+    print(f"Recommendation ({len(recommendation)} chars): {recommendation}")
 
     print("Sending SMS...")
     send_sms(recommendation)
