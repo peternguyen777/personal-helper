@@ -126,22 +126,21 @@ UV index: {weather['uv_index']}
 {wardrobe_text}
 </wardrobe>
 
-Give me today's outfit recommendation. CRITICAL: Keep under 150 characters total for SMS.
+Give me today's outfit recommendation. Keep under 300 characters for SMS.
 
-Format: [temp]°C [conditions]. [Top] + [Bottom] + [Shoes].
+Format: [temp]°C, [conditions]. [Top] + [Bottom] + [Shoes]. [Outer if needed]. [One styling tip.]
 
-Use short item names. No outer layer unless cold. No styling notes. No markdown."""
+Use actual item names from my wardrobe. No markdown, no bullet points, plain text only."""
 
     message = client.messages.create(
         model="claude-sonnet-4-20250514",
-        max_tokens=60,
+        max_tokens=150,
         messages=[{"role": "user", "content": prompt}]
     )
 
     response = message.content[0].text
-    # Twilio trial prepends ~42 chars: "Sent from your Twilio trial account - "
-    # So we need to keep our message under ~115 chars to stay in one segment
-    max_len = 115
+    # Cap at 320 chars (2 SMS segments) to keep costs reasonable
+    max_len = 320
     if len(response) > max_len:
         response = response[:max_len - 3] + "..."
     return response
