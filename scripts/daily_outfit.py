@@ -68,7 +68,7 @@ def fetch_weather() -> dict:
         "daily_rain_chance_percent": daily["precipitation_probability_max"][0],
         "uv_index": daily["uv_index_max"][0],
         "local_time": datetime.now().strftime("%I:%M %p"),
-        "day_of_week": datetime.now().strftime("%A")
+        "date_formatted": datetime.now().strftime("%A %-d %b")
     }
 
 
@@ -129,7 +129,9 @@ UV index: {weather['uv_index']}
 
 Give me today's outfit recommendation. Keep under 350 characters for SMS.
 
-Format: [Day], Sydney - [temp]°C, [humidity]% humidity, [conditions]. [Top] + [Bottom] + [Shoes]. [Outer if needed]. [Accessory if appropriate]. [One styling tip.]
+Format: [Day D Mon], Sydney - [temp]°C, [humidity]% humidity, [conditions]. [Top] + [Bottom] + [Shoes]. [Outer if needed]. [Accessory if appropriate]. [One styling tip.]
+
+Example format: "Tuesday 20 Jan, Sydney - 25°C, 72% humidity, partly cloudy..."
 
 Use actual item names from my wardrobe. No markdown, no bullet points, plain text only."""
 
