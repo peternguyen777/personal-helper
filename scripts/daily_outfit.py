@@ -230,12 +230,11 @@ def main():
 
     print("Fetching weather...")
     weather = fetch_weather()
-    print(f"Weather: {weather['temperature_c']}°C, {weather['conditions']}")
-    print(f"Weather date_formatted: {weather['date_formatted']}")
+    print(f"Weather API response: {json.dumps(weather, indent=2)}")
 
     print("Fetching wardrobe...")
     wardrobe = fetch_wardrobe()
-    print(f"Found {len(wardrobe)} items")
+    print(f"Wardrobe API response ({len(wardrobe)} items): {json.dumps(wardrobe, indent=2)}")
 
     print("Loading skill...")
     skill = load_skill()
