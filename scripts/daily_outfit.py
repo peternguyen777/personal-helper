@@ -135,7 +135,7 @@ IMPORTANT: Use the exact date from the weather data above (Date: {weather['date_
 
 Format (use actual line breaks):
 Good morning Peter, it is {weather['date_formatted']} in Sydney.
-The weather today is [temp]°C, [humidity]% humidity, [conditions].
+The weather today is [today's high]°C, [humidity]% humidity, [conditions].
 
 [Brief explanation of outfit choice based on weather + styling tip]
 
@@ -150,7 +150,7 @@ LAYERING OPTION: In mild weather (20-24°C), you can recommend a white tee as an
 
 Example 1 (hot/humid day):
 Good morning Peter, it is [Day Date] in Sydney.
-The weather today is [temp]°C, [humidity]% humidity, [conditions].
+The weather today is [today's high]°C, [humidity]% humidity, [conditions].
 
 [1-2 sentence explanation of why this outfit works for the weather + a styling tip]
 
@@ -161,7 +161,7 @@ Accessory: [optional - belt or other if appropriate]
 
 Example 2 (mild layering weather):
 Good morning Peter, it is [Day Date] in Sydney.
-The weather today is [temp]°C, [humidity]% humidity, [conditions].
+The weather today is [today's high]°C, [humidity]% humidity, [conditions].
 
 [1-2 sentence explanation of layering choice + styling tip]
 
@@ -172,7 +172,7 @@ Accessory: [optional - belt from wardrobe]
 
 Example 3 (cooler weather):
 Good morning Peter, it is [Day Date] in Sydney.
-The weather today is [temp]°C, [humidity]% humidity, [conditions].
+The weather today is [today's high]°C, [humidity]% humidity, [conditions].
 
 [1-2 sentence explanation of layering choice + styling tip]
 
