@@ -134,8 +134,8 @@ Give me today's outfit recommendation. Keep under 400 characters for SMS. Use li
 IMPORTANT: Use the exact date from the weather data above (Date: {weather['date_formatted']}).
 
 Format (use actual line breaks):
-{weather['date_formatted']}, Sydney
-[temp]°C, [humidity]% humidity, [conditions]
+Good morning Peter, it is {weather['date_formatted']} in Sydney.
+The weather today is [temp]°C, [humidity]% humidity, [conditions].
 
 Top: [item]
 Bottom: [item]
@@ -147,8 +147,8 @@ Accessory: [item if appropriate]
 REQUIRED: Always include Top, Bottom, and Shoes with their labels.
 
 Example:
-Tuesday 20 Jan, Sydney
-25°C, 72% humidity, partly cloudy
+Good morning Peter, it is Tuesday 20 Jan in Sydney.
+The weather today is 25°C, 72% humidity, partly cloudy.
 
 Top: Chambray
 Bottom: Olive Fatigues
