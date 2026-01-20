@@ -148,7 +148,41 @@ REQUIRED: Always include Top, Bottom, and Shoes with their labels.
 
 LAYERING OPTION: In mild weather (20-24°C), you can recommend a white tee as an underlayer with an unbuttoned shirt. Format as "Top: [tee] + [shirt] (unbuttoned)"
 
-IMPORTANT: Vary your recommendations! Don't default to the same items. Consider the full wardrobe and pick pieces that suit today's specific weather conditions.
+Example 1 (hot/humid day):
+Good morning Peter, it is [Day Date] in Sydney.
+The weather today is [temp]°C, [humidity]% humidity, [conditions].
+
+[1-2 sentence explanation of why this outfit works for the weather + a styling tip]
+
+Top: [breathable shirt from wardrobe]
+Bottom: [lightweight pants from wardrobe]
+Shoes: [appropriate footwear]
+Accessory: [optional - belt or other if appropriate]
+
+Example 2 (mild layering weather):
+Good morning Peter, it is [Day Date] in Sydney.
+The weather today is [temp]°C, [humidity]% humidity, [conditions].
+
+[1-2 sentence explanation of layering choice + styling tip]
+
+Top: [tee] + [shirt] (unbuttoned)
+Bottom: [pants from wardrobe]
+Shoes: [appropriate footwear]
+Accessory: [optional - belt from wardrobe]
+
+Example 3 (cooler weather):
+Good morning Peter, it is [Day Date] in Sydney.
+The weather today is [temp]°C, [humidity]% humidity, [conditions].
+
+[1-2 sentence explanation of layering choice + styling tip]
+
+Top: [shirt from wardrobe]
+Bottom: [pants from wardrobe]
+Shoes: [appropriate footwear]
+Outer: [outer layer from wardrobe]
+Accessory: [optional - belt from wardrobe]
+
+IMPORTANT: Vary your recommendations daily! Don't default to the same items - explore the full wardrobe.
 
 Use actual item names from my wardrobe. Plain text only, no markdown."""
 
