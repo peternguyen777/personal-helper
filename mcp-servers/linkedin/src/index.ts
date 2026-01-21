@@ -101,7 +101,7 @@ server.tool(
 // List recent posts tool
 server.tool(
   "list_recent_posts",
-  "List your recent LinkedIn posts (up to 10)",
+  "List your recent LinkedIn posts (up to 10, from local storage)",
   {},
   async () => {
     try {

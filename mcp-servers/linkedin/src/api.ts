@@ -1,7 +1,40 @@
+import { readFileSync, writeFileSync, existsSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 import { loadTokens, isTokenValid, LinkedInTokens } from "./auth.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const POSTS_PATH = join(__dirname, "..", "posts.json");
 
 const API_BASE = "https://api.linkedin.com/v2";
 const API_REST = "https://api.linkedin.com/rest";
+
+interface SavedPost {
+  id: string;
+  url: string;
+  text: string;
+  createdAt: string;
+}
+
+function loadSavedPosts(): SavedPost[] {
+  if (!existsSync(POSTS_PATH)) {
+    return [];
+  }
+  try {
+    const data = readFileSync(POSTS_PATH, "utf-8");
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+}
+
+function savePost(post: SavedPost): void {
+  const posts = loadSavedPosts();
+  posts.unshift(post); // Add to beginning
+  // Keep only last 50 posts
+  const trimmed = posts.slice(0, 50);
+  writeFileSync(POSTS_PATH, JSON.stringify(trimmed, null, 2));
+}
 
 interface LinkedInPostResponse {
   id: string;
@@ -68,10 +101,17 @@ export async function createTextPost(text: string): Promise<{ id: string; url: s
   }
 
   const postId = response.headers.get("x-restli-id") || "unknown";
-  return {
+  const url = `https://www.linkedin.com/feed/update/${postId}`;
+
+  // Save post locally for future reference
+  savePost({
     id: postId,
-    url: `https://www.linkedin.com/feed/update/${postId}`,
-  };
+    url,
+    text,
+    createdAt: new Date().toISOString(),
+  });
+
+  return { id: postId, url };
 }
 
 export async function getPostAnalytics(
@@ -89,28 +129,13 @@ export async function getPostAnalytics(
   };
 }
 
-export async function listRecentPosts(): Promise<Array<{ id: string; text: string; created: string }>> {
-  const tokens = getValidTokens();
-
-  const profile = await getProfile();
-  const authorUrn = `urn:li:person:${profile.sub}`;
-
-  const response = await fetch(
-    `${API_REST}/posts?author=${encodeURIComponent(authorUrn)}&q=author&count=10`,
-    {
-      headers: getHeaders(tokens),
-    }
-  );
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to list posts: ${error}`);
-  }
-
-  const data = await response.json();
-  return (data.elements || []).map((post: LinkedInPostResponse) => ({
+export async function listRecentPosts(): Promise<Array<{ id: string; url: string; text: string; createdAt: string }>> {
+  // Return locally saved posts (LinkedIn API requires Marketing Developer Platform to read posts)
+  const posts = loadSavedPosts();
+  return posts.slice(0, 10).map((post) => ({
     id: post.id,
-    text: post.commentary?.substring(0, 100) || "",
-    created: post.createdAt ? new Date(post.createdAt).toISOString() : "unknown",
+    url: post.url,
+    text: post.text.length > 100 ? post.text.substring(0, 100) + "..." : post.text,
+    createdAt: post.createdAt,
   }));
 }
