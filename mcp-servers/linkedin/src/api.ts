@@ -22,7 +22,7 @@ function getHeaders(tokens: LinkedInTokens): Record<string, string> {
     Authorization: `Bearer ${tokens.access_token}`,
     "Content-Type": "application/json",
     "X-Restli-Protocol-Version": "2.0.0",
-    "LinkedIn-Version": "202401",
+    "LinkedIn-Version": "202601",
   };
 }
 
