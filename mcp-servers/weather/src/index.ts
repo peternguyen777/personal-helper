@@ -20,6 +20,7 @@ interface ForecastResponse {
   day_name: string;
   temp_high_c: number;
   temp_low_c: number;
+  humidity_percent: number;
   rain_chance_percent: number;
   uv_index: number;
   conditions: string;
@@ -236,7 +237,7 @@ async function getForecast(city: string, day: string): Promise<ForecastResponse>
   const daysAhead = parseDayToDaysAhead(day, timezone);
 
   // Fetch forecast from Open-Meteo
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max,weather_code&timezone=auto&forecast_days=8`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,precipitation_probability_max,uv_index_max,weather_code&timezone=auto&forecast_days=8`;
 
   const response = await fetch(url);
   if (!response.ok) {
@@ -283,6 +284,7 @@ async function getForecast(city: string, day: string): Promise<ForecastResponse>
     day_name: dayName,
     temp_high_c: Math.round(daily.temperature_2m_max[daysAhead]),
     temp_low_c: Math.round(daily.temperature_2m_min[daysAhead]),
+    humidity_percent: Math.round(daily.relative_humidity_2m_mean[daysAhead] || 0),
     rain_chance_percent: daily.precipitation_probability_max[daysAhead] || 0,
     uv_index: Math.round(daily.uv_index_max[daysAhead] || 0),
     conditions: weatherCodes[daily.weather_code[daysAhead]] || "Unknown",
@@ -334,7 +336,7 @@ server.tool(
 // Register the get_forecast tool
 server.tool(
   "get_forecast",
-  "Get weather forecast for a specific day. Returns high/low temperatures, rain chance, UV index, and conditions. Use for future weather queries.",
+  "Get weather forecast for a specific day. Returns high/low temperatures, humidity, rain chance, UV index, and conditions. Use for future weather queries.",
   {
     city: z
       .string()

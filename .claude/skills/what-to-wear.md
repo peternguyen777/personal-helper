@@ -21,8 +21,8 @@ Requires:
    - **Which temperature to use for outfit decisions:**
      - Morning (before 12pm): Use the forecast high (`temp_high_c`) — dress for the warmest part of the day ahead
      - Afternoon/Evening (12pm onwards): Use current conditions (`feels_like_c`) — the day's peak has passed
-   - Use `get_weather` data for humidity, wind, and current conditions regardless of time
-   - For a specific future day: use `get_forecast` with the day parameter (e.g., "wednesday", "tomorrow")
+   - Use `get_weather` data for wind and current conditions regardless of time
+   - For a specific future day: use `get_forecast` with the day parameter (e.g., "wednesday", "tomorrow") — includes humidity
    - Assume Sydney unless user explicitly mentions another city
    - Never ask for location - just use Sydney by default
 
