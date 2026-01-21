@@ -17,7 +17,7 @@ Draft, review, and post content to LinkedIn with algorithm optimization.
 - Short and punchy (2-4 paragraphs)
 - Strong opening hook that creates curiosity
 - No emojis, no em dashes
-- 3-5 relevant hashtags at bottom (PascalCase)
+- No hashtags
 - No links in main post body (suggest adding to comments)
 - Narrative over advice ("here's a thing that happened" not "here's my framework")
 
@@ -68,7 +68,7 @@ PM in AI, software/tech career, product thinking, relatable work moments, small 
 
 [Optional: one more beat or punchline]
 
-#RelevantHashtag #AnotherOne #MaybeOneMore
+[Optional: genuine CTA if relevant]
 ```
 
 ## What NOT to Do
@@ -76,10 +76,11 @@ PM in AI, software/tech career, product thinking, relatable work moments, small 
 - No "I learned that..." openings
 - No numbered lists of advice
 - No "Here's my framework for..."
-- No engagement bait ("Comment if you agree!")
+- No forced engagement bait ("Comment if you agree!") - but genuine CTAs are OK when relevant (e.g., "interested? let me know")
 - No humble brags disguised as stories
 - No em dashes
 - No emojis
+- No hashtags
 
 ## Example Post
 
@@ -89,6 +90,4 @@ Spent 20 minutes in a meeting trying to sound smart about a feature I'd never he
 Turns out it was something I built last quarter. Just with a different name now.
 
 Product management is mostly just keeping track of what things are called this week.
-
-#ProductManagement #TechLife
 ```
