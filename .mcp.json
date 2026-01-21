@@ -8,6 +8,11 @@
     "google-sheets": {
       "command": "/Users/peternguyen/Personal/personal-helper/mcp-servers/google-sheets/venv/bin/python",
       "args": ["-m", "claude_google_sheets.server"]
+    },
+    "linkedin": {
+      "command": "node",
+      "args": ["mcp-servers/linkedin/dist/index.js"],
+      "cwd": "/Users/peternguyen/Personal/personal-helper"
     }
   }
 }
