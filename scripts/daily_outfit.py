@@ -7,7 +7,8 @@ and sends it via SMS.
 
 import json
 import os
-from datetime import datetime
+import re
+from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -73,17 +74,19 @@ def fetch_weather() -> dict:
     }
 
 
-def fetch_wardrobe() -> list[dict]:
-    """Fetch wardrobe items from Google Sheets."""
-    # Load service account credentials from environment
+def get_sheets_client():
+    """Get authenticated Google Sheets client with read/write access."""
     service_account_info = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT"])
-
     credentials = Credentials.from_service_account_info(
         service_account_info,
-        scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"]
+        scopes=["https://www.googleapis.com/auth/spreadsheets"]
     )
+    return gspread.authorize(credentials)
 
-    client = gspread.authorize(credentials)
+
+def fetch_wardrobe() -> list[dict]:
+    """Fetch wardrobe items from Google Sheets."""
+    client = get_sheets_client()
     sheet = client.open_by_key(WARDROBE_SPREADSHEET_ID).sheet1
 
     # Get all records (assumes first row is headers)
@@ -91,12 +94,67 @@ def fetch_wardrobe() -> list[dict]:
     return records
 
 
+def fetch_outfit_history(days: int = 7) -> list[dict]:
+    """Fetch outfit history from the last N days from Google Sheets."""
+    client = get_sheets_client()
+    spreadsheet = client.open_by_key(WARDROBE_SPREADSHEET_ID)
+
+    # Try to get the History sheet, create if it doesn't exist
+    try:
+        history_sheet = spreadsheet.worksheet("History")
+    except gspread.WorksheetNotFound:
+        history_sheet = spreadsheet.add_worksheet(title="History", rows=100, cols=5)
+        history_sheet.update("A1:E1", [["Date", "Top", "Bottom", "Shoes", "Accessory"]])
+        return []
+
+    records = history_sheet.get_all_records()
+    if not records:
+        return []
+
+    # Filter to only entries from the last N days
+    cutoff_date = datetime.now(ZoneInfo("Australia/Sydney")) - timedelta(days=days)
+    recent_history = []
+
+    for record in records:
+        try:
+            record_date = datetime.strptime(record["Date"], "%Y-%m-%d")
+            record_date = record_date.replace(tzinfo=ZoneInfo("Australia/Sydney"))
+            if record_date >= cutoff_date:
+                recent_history.append(record)
+        except (ValueError, KeyError):
+            continue
+
+    return recent_history
+
+
+def save_outfit_to_history(outfit: dict) -> None:
+    """Save today's outfit to the History sheet."""
+    client = get_sheets_client()
+    spreadsheet = client.open_by_key(WARDROBE_SPREADSHEET_ID)
+
+    try:
+        history_sheet = spreadsheet.worksheet("History")
+    except gspread.WorksheetNotFound:
+        history_sheet = spreadsheet.add_worksheet(title="History", rows=100, cols=5)
+        history_sheet.update("A1:E1", [["Date", "Top", "Bottom", "Shoes", "Accessory"]])
+
+    today = datetime.now(ZoneInfo("Australia/Sydney")).strftime("%Y-%m-%d")
+    row = [
+        today,
+        outfit.get("top", ""),
+        outfit.get("bottom", ""),
+        outfit.get("shoes", ""),
+        outfit.get("accessory", "")
+    ]
+    history_sheet.append_row(row)
+
+
 def load_skill() -> str:
     """Load the what-to-wear skill file."""
     return SKILL_PATH.read_text()
 
 
-def get_outfit_recommendation(weather: dict, wardrobe: list[dict], skill: str) -> str:
+def get_outfit_recommendation(weather: dict, wardrobe: list[dict], skill: str, history: list[dict]) -> str:
     """Get outfit recommendation from Claude."""
     client = anthropic.Anthropic()
 
@@ -105,6 +163,40 @@ def get_outfit_recommendation(weather: dict, wardrobe: list[dict], skill: str) -
         f"- {item['Item']} ({item['Category']}, {item.get('Pillar', 'N/A')}): {item.get('Description', 'N/A')}"
         for item in wardrobe
     )
+
+    # Format recent outfit history with quantity-aware exclusions
+    if history:
+        # Count how many times each top was worn
+        top_wear_counts: dict[str, int] = {}
+        for h in history:
+            top = h.get("Top", "")
+            if top:
+                top_wear_counts[top] = top_wear_counts.get(top, 0) + 1
+
+        # Build quantity lookup from wardrobe
+        top_quantities: dict[str, int] = {}
+        for item in wardrobe:
+            if item.get("Category") == "Top":
+                top_quantities[item["Item"]] = int(item.get("Quantity", 1))
+
+        # Only exclude tops that have been worn >= their quantity
+        excluded_tops = [
+            top for top, count in top_wear_counts.items()
+            if count >= top_quantities.get(top, 1)
+        ]
+
+        bottoms_worn = [h["Bottom"] for h in history if h.get("Bottom")]
+        history_text = f"""
+<recent_outfits>
+RULES:
+- DO NOT recommend these tops (already worn their max times this week): {', '.join(excluded_tops) if excluded_tops else 'None - all tops available'}
+- Try to vary bottoms (recently worn): {', '.join(set(bottoms_worn)) if bottoms_worn else 'None'}
+
+Full history (last 7 days):
+""" + "\n".join(f"- {h['Date']}: Top={h.get('Top', 'N/A')}, Bottom={h.get('Bottom', 'N/A')}" for h in history) + """
+</recent_outfits>"""
+    else:
+        history_text = ""
 
     prompt = f"""You are helping me decide what to wear today. Use the skill instructions below for guidance.
 
@@ -128,7 +220,7 @@ UV index: {weather['uv_index']}
 <wardrobe>
 {wardrobe_text}
 </wardrobe>
-
+{history_text}
 Give me today's outfit recommendation. Keep under 400 characters for SMS. Use line breaks for readability.
 
 IMPORTANT: Use the exact date from the weather data above (Date: {weather['date_formatted']}).
@@ -182,7 +274,7 @@ Shoes: [appropriate footwear]
 Outer: [outer layer from wardrobe]
 Accessory: [optional - belt from wardrobe]
 
-IMPORTANT: Vary your recommendations daily! Don't default to the same items - explore the full wardrobe.
+CRITICAL: You MUST NOT recommend any top that appears in the "DO NOT recommend" list above. Pick a different top from the wardrobe.
 
 Use actual item names from my wardrobe. Plain text only, no markdown."""
 
@@ -199,6 +291,26 @@ Use actual item names from my wardrobe. Plain text only, no markdown."""
     if len(response) > max_len:
         response = response[:max_len - 3] + "..."
     return response
+
+
+def parse_outfit_from_recommendation(recommendation: str) -> dict:
+    """Parse the outfit items from the recommendation text."""
+    outfit = {}
+
+    # Match patterns like "Top: Item name" or "Top: Item1 + Item2 (note)"
+    patterns = {
+        "top": r"Top:\s*(.+?)(?:\n|$)",
+        "bottom": r"Bottom:\s*(.+?)(?:\n|$)",
+        "shoes": r"Shoes:\s*(.+?)(?:\n|$)",
+        "accessory": r"Accessory:\s*(.+?)(?:\n|$)",
+    }
+
+    for key, pattern in patterns.items():
+        match = re.search(pattern, recommendation, re.IGNORECASE)
+        if match:
+            outfit[key] = match.group(1).strip()
+
+    return outfit
 
 
 def send_sms(message: str) -> None:
@@ -236,15 +348,27 @@ def main():
     wardrobe = fetch_wardrobe()
     print(f"Wardrobe API response ({len(wardrobe)} items): {json.dumps(wardrobe, indent=2)}")
 
+    print("Fetching outfit history...")
+    history = fetch_outfit_history(days=7)
+    print(f"Outfit history (last 7 days): {json.dumps(history, indent=2)}")
+
     print("Loading skill...")
     skill = load_skill()
 
     print("Getting recommendation from Claude...")
-    recommendation = get_outfit_recommendation(weather, wardrobe, skill)
+    recommendation = get_outfit_recommendation(weather, wardrobe, skill, history)
     print(f"Recommendation ({len(recommendation)} chars): {recommendation}")
+
+    print("Parsing outfit from recommendation...")
+    outfit = parse_outfit_from_recommendation(recommendation)
+    print(f"Parsed outfit: {json.dumps(outfit, indent=2)}")
 
     print("Sending SMS...")
     send_sms(recommendation)
+
+    print("Saving outfit to history...")
+    save_outfit_to_history(outfit)
+
     print("Done!")
 
 
