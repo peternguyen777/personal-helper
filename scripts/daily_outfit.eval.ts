@@ -7,7 +7,7 @@
 
 import { Eval, initDataset, initFunction, loadPrompt, wrapAnthropic, currentSpan } from "braintrust";
 import Anthropic from "@anthropic-ai/sdk";
-import type { Weather, WardrobeItem, HistoryEntry } from "./prompt.ts";
+import type { Weather, WardrobeItem, HistoryEntry } from "./types.ts";
 
 // Load hosted scorers from Braintrust and wrap to ensure proper naming
 const PROJECT = "daily-outfit-prompt";

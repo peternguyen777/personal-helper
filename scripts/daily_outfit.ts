@@ -12,7 +12,7 @@ import { JWT } from "google-auth-library";
 import Twilio from "twilio";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
-import { type Weather, type WardrobeItem, type HistoryEntry } from "./prompt.ts";
+import { type Weather, type WardrobeItem, type HistoryEntry } from "./types.ts";
 import {
   hasRequiredFields,
   underCharLimit,
@@ -24,7 +24,7 @@ import {
 import { CONFIG } from "./config.ts";
 
 // Re-export types for backwards compatibility
-export { type Weather, type WardrobeItem, type HistoryEntry } from "./prompt.ts";
+export { type Weather, type WardrobeItem, type HistoryEntry } from "./types.ts";
 
 // Pinned prompt version - update this when deploying new prompt versions
 const PROMPT_VERSION = "d059a041c74c3f5a";

@@ -4,7 +4,7 @@
  */
 
 import { initDataset } from "braintrust";
-import type { Weather, WardrobeItem, HistoryEntry } from "./prompt.ts";
+import type { Weather, WardrobeItem, HistoryEntry } from "./types.ts";
 
 // Mock wardrobe (same as eval tests)
 const mockWardrobe: WardrobeItem[] = [
