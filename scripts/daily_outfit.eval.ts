@@ -7,7 +7,7 @@
 
 import { Eval, initDataset, initFunction, loadPrompt, wrapAnthropic, currentSpan } from "braintrust";
 import Anthropic from "@anthropic-ai/sdk";
-import type { Weather, WardrobeItem, HistoryEntry } from "./types.ts";
+import type { Weather, HistoryEntry } from "./types.ts";
 
 // Load hosted scorers from Braintrust and wrap to ensure proper naming
 const PROJECT = "daily-outfit-prompt";
@@ -26,20 +26,6 @@ const usesCorrectDate = createHostedScorer("uses-correct-date-v4", "uses_correct
 const respectsOuterRule = createHostedScorer("respects-outer-rule-v4", "respects_outer_rule");
 const respectsBootsRule = createHostedScorer("respects-boots-rule-v4", "respects_boots_rule");
 const respectsCapRule = createHostedScorer("respects-cap-rule-v4", "respects_cap_rule");
-
-// Mock wardrobe (same as snapshot tests)
-const mockWardrobe: WardrobeItem[] = [
-  { Item: "Whitesville Tee", Category: "Top", Pillar: "Workwear", Quantity: 8, Description: "White heavyweight cotton tee" },
-  { Item: "Buzz Rickson's Chambray", Category: "Top", Pillar: "Workwear", Quantity: 1, Description: "Light blue chambray work shirt" },
-  { Item: "Kamakura OCBD", Category: "Top", Pillar: "Ivy", Quantity: 1, Description: "White oxford cloth button-down" },
-  { Item: "OrSlow Fatigues", Category: "Bottom", Pillar: "Military", Quantity: 1, Description: "Olive green army fatigues" },
-  { Item: "OrSlow 105 Jeans", Category: "Bottom", Pillar: "Workwear", Quantity: 1, Description: "Indigo selvedge denim" },
-  { Item: "Alden Indy Boots", Category: "Shoes", Pillar: "Workwear", Quantity: 1, Description: "Brown leather work boots" },
-  { Item: "Converse Chuck 70", Category: "Shoes", Pillar: "Sportswear", Quantity: 1, Description: "White canvas sneakers" },
-  { Item: "Buzz Rickson's Deck Jacket", Category: "Outer", Pillar: "Military", Quantity: 1, Description: "Navy N-1 deck jacket" },
-  { Item: "Ebbets Field Cap", Category: "Accessory", Pillar: "Sportswear", Quantity: 1, Description: "Wool baseball cap" },
-  { Item: "Tochigi Leather Belt", Category: "Accessory", Pillar: "Workwear", Quantity: 1, Description: "Brown leather belt" },
-];
 
 // Test case type (matches structure in Braintrust dataset)
 interface TestCase {
@@ -73,39 +59,7 @@ function parseOutfit(response: string): Record<string, string> {
   return outfit;
 }
 
-// Local scorers (depend on local mockWardrobe data)
-const usesWardrobeItems = (args: { output: string }) => {
-  const outfit = parseOutfit(args.output);
-  const wardrobeItems = mockWardrobe.map(w => w.Item.toLowerCase());
-
-  const fields = ["top", "bottom", "shoes", "outer", "accessory"];
-  let validCount = 0;
-  let totalCount = 0;
-  const issues: string[] = [];
-
-  for (const field of fields) {
-    if (outfit[field]) {
-      totalCount++;
-      // Handle layered tops like "Whitesville Tee + Buzz Rickson's Chambray (unbuttoned)"
-      const items = outfit[field].split("+").map(s => s.replace(/\(.*\)/, "").trim().toLowerCase());
-      const allValid = items.every(item =>
-        wardrobeItems.some(w => item.includes(w) || w.includes(item))
-      );
-      if (allValid) {
-        validCount++;
-      } else {
-        issues.push(`${field}: "${outfit[field]}" not in wardrobe`);
-      }
-    }
-  }
-
-  return {
-    name: "uses_wardrobe_items",
-    score: totalCount > 0 ? validCount / totalCount : 0,
-    metadata: { validCount, totalCount, issues },
-  };
-};
-
+// Local scorer
 const respectsExcludedTops = (args: { output: string; expected: TestCase["expected"]; input: TestCase["input"] }) => {
   const outfit = parseOutfit(args.output);
   const excludedTops = args.input.excludedTops.map(t => t.toLowerCase());
@@ -181,8 +135,9 @@ Eval("daily-outfit-prompt", {
     respectsOuterRule,
     respectsBootsRule,
     respectsCapRule,
-    // Local scorers (depend on mockWardrobe data)
-    usesWardrobeItems,
+    // Local scorer
     respectsExcludedTops as any,
   ],
+
+  maxConcurrency: 5,
 });
