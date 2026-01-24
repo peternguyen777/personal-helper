@@ -13,6 +13,8 @@ Requires:
 - `weather` MCP for weather data
 - `google-sheets-mcp` for wardrobe access
 - Wardrobe spreadsheet ID: `1Cx2KUswPEQypVMUPUTPtLOFQ3oGdme1TcFf7z5BZ_7k`
+  - **Sheet1**: Wardrobe catalog (Item, Category, Pillar, Quantity, Description)
+  - **History**: Outfit history (Date, Top, Bottom, Shoes, Outer, Accessory)
 
 ## Instructions
 
@@ -33,12 +35,22 @@ Requires:
    - Use Description field (if present) for additional context about the item
    - If sheet is empty or unavailable, fall back to generic ametora suggestions
 
-3. **Consider the local time** (from the weather response)
+3. **Check outfit history** from the History sheet
+   - Use MCP `read_range` to fetch from "History" sheet (columns A:F)
+   - Filter to last 7 days only
+   - Track which tops have been worn and how many times
+   - **Top repetition rule**: Don't recommend a top if it's been worn >= its Quantity in the last 7 days
+     - Example: Whitesville Tee (qty 8) can be worn up to 8 times per week
+     - Example: Kamakura OCBD (qty 1) can only be worn once per week
+   - **Bottom repetition rule**: Bottoms can repeat within a week, but vary when possible
+   - If History sheet doesn't exist, skip this step (first run)
+
+4. **Consider the local time** (from the weather response)
    - The `local_time` field shows current day and time for the city
    - Morning commute vs afternoon vs evening can affect layering needs
    - If it's evening, consider tomorrow morning's weather may differ
 
-4. **Select outfit from wardrobe** based on weather:
+5. **Select outfit from wardrobe** based on weather:
 
    For each category needed (Top, Bottom, Shoes, optionally Outer, and optionally Accessory):
    - Filter your wardrobe items by that category
@@ -70,7 +82,7 @@ Requires:
 
    **If category has no items:** Note the gap and suggest a generic ametora piece
 
-5. **Apply weather modifiers** when selecting items:
+6. **Apply weather modifiers** when selecting items:
 
 | Condition | Item Selection Preference |
 |-----------|--------------------------|
@@ -79,7 +91,7 @@ Requires:
 | Humid (>80%) + mild/warm (>20°C) | Prefer lightweight items, tees, open-weave fabrics; skip outer layers |
 | Windy (>30 km/h) | Prefer structured outers over knit layers |
 
-6. **Format response** with your selected items:
+7. **Format response** with your selected items:
 
 > **Today in [City]**: [temp]°C (feels like [feels_like]°C), [conditions], [wind] km/h wind
 > **Time**: [current local time] - [context about when clothes will be worn]
