@@ -120,7 +120,7 @@ async function getGoogleSheet(): Promise<GoogleSpreadsheet> {
   return doc;
 }
 
-async function fetchWardrobe(): Promise<WardrobeItem[]> {
+export async function fetchWardrobe(): Promise<WardrobeItem[]> {
   const doc = await getGoogleSheet();
   const sheet = doc.sheetsByTitle["Wardrobe Catalogue"];
   const rows = await sheet.getRows();
@@ -379,7 +379,26 @@ async function sendSms(message: string): Promise<void> {
   }
 }
 
-async function main() {
+// Dependencies that can be injected for testing
+export interface Dependencies {
+  fetchWeather: () => Promise<Weather>;
+  fetchWardrobe: () => Promise<WardrobeItem[]>;
+  fetchOutfitHistory: (days?: number) => Promise<HistoryEntry[]>;
+  sendSms: (message: string) => Promise<void>;
+  saveOutfitToHistory: (outfit: Outfit) => Promise<void>;
+}
+
+// Default production dependencies
+const defaultDependencies: Dependencies = {
+  fetchWeather,
+  fetchWardrobe,
+  fetchOutfitHistory,
+  sendSms,
+  saveOutfitToHistory,
+};
+
+// Exported for testing - runs the full flow with injectable dependencies
+export async function runDailyOutfit(deps: Dependencies = defaultDependencies): Promise<{ recommendation: string; smsWasSent: boolean }> {
   // Debug: Show timezone calculation
   const sydneyNow = getSydneyTime();
   const utcNow = new Date();
@@ -388,15 +407,15 @@ async function main() {
   console.log(`Date formatted: ${formatDate(sydneyNow)}`);
 
   console.log("Fetching weather...");
-  const weather = await fetchWeather();
+  const weather = await deps.fetchWeather();
   console.log(`Weather API response: ${JSON.stringify(weather, null, 2)}`);
 
   console.log("Fetching wardrobe...");
-  const wardrobe = await fetchWardrobe();
+  const wardrobe = await deps.fetchWardrobe();
   console.log(`Wardrobe API response (${wardrobe.length} items): ${JSON.stringify(wardrobe, null, 2)}`);
 
   console.log("Fetching outfit history...");
-  const history = await fetchOutfitHistory();
+  const history = await deps.fetchOutfitHistory();
   console.log(`Outfit history (last ${CONFIG.history.lookbackDays} days): ${JSON.stringify(history, null, 2)}`);
 
   // Use traced to create a span for recommendation and scoring
@@ -430,12 +449,17 @@ async function main() {
   console.log(`Parsed outfit: ${JSON.stringify(outfit, null, 2)}`);
 
   console.log("Sending SMS...");
-  await sendSms(recommendation);
+  await deps.sendSms(recommendation);
 
   console.log("Saving outfit to history...");
-  await saveOutfitToHistory(outfit);
+  await deps.saveOutfitToHistory(outfit);
 
   console.log("Done!");
+  return { recommendation, smsWasSent: true };
+}
+
+async function main() {
+  await runDailyOutfit();
 }
 
 // Only run main when executed directly (not when imported)
