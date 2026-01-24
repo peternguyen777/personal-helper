@@ -1,0 +1,11 @@
+{
+  "name": "personal-helper",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "outfit": "npm run outfit --prefix scripts",
+    "test": "npm run test --prefix scripts",
+    "test:update": "npm run test:update --prefix scripts",
+    "eval": "npm run eval --prefix scripts"
+  }
+}
