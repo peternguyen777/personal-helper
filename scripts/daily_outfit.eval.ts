@@ -5,17 +5,27 @@
  * Uses hosted dataset and prompt from Braintrust
  */
 
-import { Eval, initDataset, loadPrompt, wrapAnthropic, currentSpan } from "braintrust";
+import { Eval, initDataset, initFunction, loadPrompt, wrapAnthropic, currentSpan } from "braintrust";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Weather, WardrobeItem, HistoryEntry } from "./prompt.ts";
-import {
-  hasRequiredFields,
-  underCharLimit,
-  usesCorrectDate,
-  respectsOuterRule,
-  respectsBootsRule,
-  respectsCapRule,
-} from "./scorers.ts";
+
+// Load hosted scorers from Braintrust and wrap to ensure proper naming
+const PROJECT = "daily-outfit-prompt";
+
+function createHostedScorer(slug: string, name: string) {
+  const hostedFn = initFunction({ projectName: PROJECT, slug });
+  return async (args: any) => {
+    const result = await hostedFn(args);
+    return { name, ...result };
+  };
+}
+
+const hasRequiredFields = createHostedScorer("has-required-fields", "has_required_fields");
+const underCharLimit = createHostedScorer("under-char-limit", "under_char_limit");
+const usesCorrectDate = createHostedScorer("uses-correct-date", "uses_correct_date");
+const respectsOuterRule = createHostedScorer("respects-outer-rule", "respects_outer_rule");
+const respectsBootsRule = createHostedScorer("respects-boots-rule", "respects_boots_rule");
+const respectsCapRule = createHostedScorer("respects-cap-rule", "respects_cap_rule");
 
 // Mock wardrobe (same as snapshot tests)
 const mockWardrobe: WardrobeItem[] = [
@@ -209,14 +219,13 @@ Eval("daily-outfit-prompt", {
   },
 
   scores: [
-    // Imported from scorers.ts (also pushed to Braintrust)
+    // Hosted scorers from Braintrust
     hasRequiredFields,
     underCharLimit,
     usesCorrectDate,
-    // Cast scorers that depend on `expected` field (which our dataset provides)
-    respectsOuterRule as any,
-    respectsBootsRule as any,
-    respectsCapRule as any,
+    respectsOuterRule,
+    respectsBootsRule,
+    respectsCapRule,
     // Local scorers (depend on mockWardrobe data)
     usesWardrobeItems,
     respectsExcludedTops as any,
