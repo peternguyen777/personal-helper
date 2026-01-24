@@ -4,7 +4,7 @@
  * Update snapshots: npx tsx daily_outfit.prompt.test.ts --update
  */
 
-import { buildPrompt, Weather, WardrobeItem, HistoryEntry } from "./daily_outfit.ts";
+import { buildPrompt, Weather, WardrobeItem, HistoryEntry } from "./prompt.ts";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
