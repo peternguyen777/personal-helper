@@ -1,9 +1,12 @@
 node_modules/
 mcp-servers/google-sheets/
+dist/
 
-# Python
+# Python (legacy)
 __pycache__/
 *.pyc
 venv/
 .venv/
+
+# Environment
 .env

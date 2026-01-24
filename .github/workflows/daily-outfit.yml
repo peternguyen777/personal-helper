@@ -18,13 +18,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.12'
+          node-version: '22'
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: npm install
+        working-directory: scripts
 
       - name: Send daily outfit SMS
         env:
@@ -34,4 +35,5 @@ jobs:
           TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
           TWILIO_FROM_NUMBER: ${{ secrets.TWILIO_FROM_NUMBER }}
           MY_PHONE_NUMBER: ${{ secrets.MY_PHONE_NUMBER }}
-        run: python scripts/daily_outfit.py
+        run: npx tsx daily_outfit.ts
+        working-directory: scripts
