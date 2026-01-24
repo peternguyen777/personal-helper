@@ -150,15 +150,8 @@ Eval("daily-outfit-prompt", {
     // Load hosted prompt from Braintrust (cached after first load)
     const outfitPrompt = await getOutfitPrompt();
 
-    // Build template variables from dataset input (pre-computed fields)
-    const templateVars = {
-      ...input.weather,
-      wardrobe_formatted: input.wardrobe_formatted,
-      history_section: input.history_section,
-    };
-
-    // Render the prompt with variables - includes span_info for tracking
-    const rendered = outfitPrompt.build(templateVars);
+    // Pass input directly - hosted prompt uses input.weather.*, input.wardrobe_formatted, etc.
+    const rendered = outfitPrompt.build({ input });
     const messages = rendered.messages as Array<{ role: "user" | "assistant"; content: string }>;
 
     // Log prompt metadata to the current span for version tracking
