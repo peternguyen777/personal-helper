@@ -3,7 +3,7 @@
  * Run with: npx dotenv -e ../.env -- braintrust eval daily_outfit.eval.ts
  */
 
-import { Eval } from "braintrust";
+import { Eval, wrapAnthropic } from "braintrust";
 import Anthropic from "@anthropic-ai/sdk";
 import { buildPrompt, Weather, WardrobeItem, HistoryEntry } from "./prompt.ts";
 
@@ -242,8 +242,8 @@ const usesCorrectDate = (args: { output: string; input: TestCase["input"] }) => 
   };
 };
 
-// Main eval
-const client = new Anthropic();
+// Main eval - wrap Anthropic client for automatic prompt tracing
+const client = wrapAnthropic(new Anthropic());
 
 Eval("daily-outfit-prompt", {
   data: () => testCases.map(tc => ({
