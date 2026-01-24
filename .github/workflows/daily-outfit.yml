@@ -24,8 +24,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: |
-          pip install anthropic gspread google-auth twilio requests
+        run: pip install -r requirements.txt
 
       - name: Send daily outfit SMS
         env:

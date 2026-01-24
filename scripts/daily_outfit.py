@@ -12,6 +12,11 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from dotenv import load_dotenv
+
+# Load .env file if it exists (for local development)
+load_dotenv(Path(__file__).parent.parent / ".env")
+
 import anthropic
 import gspread
 import requests
