@@ -2,6 +2,8 @@
  * Outfit prompt builder - shared between main script and evals.
  */
 
+import { CONFIG } from "./config.ts";
+
 // Types
 export interface Weather {
   temperature_c: number;
@@ -101,7 +103,7 @@ UV index: ${weather.uv_index}
 ${wardrobeText}
 </wardrobe>
 ${historyText}
-Give me today's outfit recommendation. Keep under 400 characters for SMS. Use line breaks for readability.
+Give me today's outfit recommendation. Keep under ${CONFIG.sms.targetChars} characters for SMS. Use line breaks for readability.
 
 IMPORTANT: Use the exact date from the weather data above (Date: ${weather.date_formatted}).
 
@@ -118,7 +120,7 @@ Accessory: [item if appropriate]
 
 REQUIRED: Always include Top, Bottom, and Shoes with their labels.
 
-LAYERING OPTION: In mild weather (20-24°C), you can recommend a white tee as an underlayer with an unbuttoned shirt. Format as "Top: [tee] + [shirt] (unbuttoned)"
+LAYERING OPTION: In mild weather (${CONFIG.weatherRules.layeringTempMinC}-${CONFIG.weatherRules.layeringTempMaxC}°C), you can recommend a white tee as an underlayer with an unbuttoned shirt. Format as "Top: [tee] + [shirt] (unbuttoned)"
 
 Example 1 (hot/humid day):
 Good morning Peter, it is [Day Date] in Sydney.
@@ -163,9 +165,9 @@ COLOR COORDINATION RULES:
 - Bad combos to avoid: light blue top + light blue bottoms, olive top + olive bottoms, ecru top + ecru bottoms
 
 WEATHER RULES:
-- Outer layer: Only include if temp < 21°C
-- Rain > 40%: Prefer boots over canvas shoes
-- UV ≥ 8: Suggest a cap/hat
+- Outer layer: Only include if temp < ${CONFIG.weatherRules.outerLayerTempC}°C
+- Rain > ${CONFIG.weatherRules.rainThresholdPercent}%: Prefer boots over canvas shoes
+- UV ≥ ${CONFIG.weatherRules.uvThreshold}: Suggest a cap/hat
 
 Use actual item names from my wardrobe. Plain text only, no markdown.`;
 }

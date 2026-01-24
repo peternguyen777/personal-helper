@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "outfit": "tsx daily_outfit.ts",
-    "test": "tsx daily_outfit.prompt.test.ts",
+    "test": "for f in *.test.ts; do tsx \"$f\" || exit 1; done",
+    "test:config": "tsx config.test.ts",
+    "test:prompt": "tsx daily_outfit.prompt.test.ts",
     "test:update": "tsx daily_outfit.prompt.test.ts --update",
     "eval": "dotenv -e ../.env -- braintrust eval daily_outfit.eval.ts",
     "push:dataset": "dotenv -e ../.env -- tsx push_dataset.ts",

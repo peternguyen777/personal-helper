@@ -21,6 +21,7 @@ import {
   respectsBootsRule,
   respectsCapRule,
 } from "./scorers.ts";
+import { CONFIG } from "./config.ts";
 
 // Re-export for backwards compatibility
 export { buildPrompt, type Weather, type WardrobeItem, type HistoryEntry } from "./prompt.ts";
@@ -35,10 +36,6 @@ const logger = initLogger({
   apiKey: process.env.BRAINTRUST_API_KEY,
 });
 
-// Constants
-const SYDNEY_LAT = -33.8688;
-const SYDNEY_LON = 151.2093;
-const WARDROBE_SPREADSHEET_ID = "1Cx2KUswPEQypVMUPUTPtLOFQ3oGdme1TcFf7z5BZ_7k";
 
 interface Outfit {
   top?: string;
@@ -75,8 +72,8 @@ function formatTime(date: Date): string {
 
 async function fetchWeather(): Promise<Weather> {
   const params = new URLSearchParams({
-    latitude: SYDNEY_LAT.toString(),
-    longitude: SYDNEY_LON.toString(),
+    latitude: CONFIG.location.latitude.toString(),
+    longitude: CONFIG.location.longitude.toString(),
     current: "temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,weather_code,wind_speed_10m",
     daily: "temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max",
     timezone: "Australia/Sydney",
@@ -115,7 +112,7 @@ async function getGoogleSheet(): Promise<GoogleSpreadsheet> {
     scopes: ["https://www.googleapis.com/auth/spreadsheets"]
   });
 
-  const doc = new GoogleSpreadsheet(WARDROBE_SPREADSHEET_ID, jwt);
+  const doc = new GoogleSpreadsheet(CONFIG.spreadsheet.wardrobeId, jwt);
   await doc.loadInfo();
   return doc;
 }
@@ -134,7 +131,7 @@ async function fetchWardrobe(): Promise<WardrobeItem[]> {
   }));
 }
 
-async function fetchOutfitHistory(days: number = 7): Promise<HistoryEntry[]> {
+async function fetchOutfitHistory(days: number = CONFIG.history.lookbackDays): Promise<HistoryEntry[]> {
   const doc = await getGoogleSheet();
   let sheet = doc.sheetsByTitle["History"];
 
@@ -218,10 +215,9 @@ async function getOutfitRecommendation(
 
   let response = (message.content[0] as { text: string }).text;
 
-  // Cap at 480 chars (3 SMS segments)
-  const maxLen = 480;
-  if (response.length > maxLen) {
-    response = response.slice(0, maxLen - 3) + "...";
+  // Cap at max SMS chars (3 SMS segments)
+  if (response.length > CONFIG.sms.maxChars) {
+    response = response.slice(0, CONFIG.sms.maxChars - 3) + "...";
   }
 
   return response;
@@ -254,9 +250,9 @@ function scoreRecommendation(
 ): { scores: Record<string, number>; passed: boolean } {
   // Build expected values based on weather rules
   const expected = {
-    shouldHaveOuter: weather.high_c < 21,
-    shouldPreferBoots: weather.daily_rain_chance_percent > 40,
-    shouldSuggestCap: weather.uv_index >= 8,
+    shouldHaveOuter: weather.high_c < CONFIG.weatherRules.outerLayerTempC,
+    shouldPreferBoots: weather.daily_rain_chance_percent > CONFIG.weatherRules.rainThresholdPercent,
+    shouldSuggestCap: weather.uv_index >= CONFIG.weatherRules.uvThreshold,
   };
 
   const input = { weather };
@@ -319,8 +315,8 @@ async function main() {
   console.log(`Wardrobe API response (${wardrobe.length} items): ${JSON.stringify(wardrobe, null, 2)}`);
 
   console.log("Fetching outfit history...");
-  const history = await fetchOutfitHistory(7);
-  console.log(`Outfit history (last 7 days): ${JSON.stringify(history, null, 2)}`);
+  const history = await fetchOutfitHistory();
+  console.log(`Outfit history (last ${CONFIG.history.lookbackDays} days): ${JSON.stringify(history, null, 2)}`);
 
   // Use traced to create a span for recommendation and scoring
   const { recommendation, scores, passed } = await traced(async (span) => {

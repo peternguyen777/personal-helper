@@ -9,6 +9,7 @@
 
 import * as braintrust from "braintrust";
 import { z } from "zod";
+import { CONFIG } from "./config.ts";
 
 const project = braintrust.projects.create({ name: "daily-outfit-prompt" });
 
@@ -57,7 +58,7 @@ project.scorers.create({
   }),
   handler: async ({ output }) => {
     const length = output.length;
-    const limit = 480;
+    const limit = CONFIG.sms.maxChars;
 
     return {
       score: length <= limit ? 1 : 0,
@@ -202,7 +203,7 @@ export const hasRequiredFields = (args: { output: string }) => {
 
 export const underCharLimit = (args: { output: string }) => {
   const length = args.output.length;
-  const limit = 480;
+  const limit = CONFIG.sms.maxChars;
 
   return {
     name: "under_char_limit",
