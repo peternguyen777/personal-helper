@@ -103,8 +103,8 @@ def fetch_outfit_history(days: int = 7) -> list[dict]:
     try:
         history_sheet = spreadsheet.worksheet("History")
     except gspread.WorksheetNotFound:
-        history_sheet = spreadsheet.add_worksheet(title="History", rows=100, cols=5)
-        history_sheet.update("A1:E1", [["Date", "Top", "Bottom", "Shoes", "Accessory"]])
+        history_sheet = spreadsheet.add_worksheet(title="History", rows=100, cols=6)
+        history_sheet.update("A1:F1", [["Date", "Top", "Bottom", "Shoes", "Outer", "Accessory"]])
         return []
 
     records = history_sheet.get_all_records()
@@ -135,8 +135,8 @@ def save_outfit_to_history(outfit: dict) -> None:
     try:
         history_sheet = spreadsheet.worksheet("History")
     except gspread.WorksheetNotFound:
-        history_sheet = spreadsheet.add_worksheet(title="History", rows=100, cols=5)
-        history_sheet.update("A1:E1", [["Date", "Top", "Bottom", "Shoes", "Accessory"]])
+        history_sheet = spreadsheet.add_worksheet(title="History", rows=100, cols=6)
+        history_sheet.update("A1:F1", [["Date", "Top", "Bottom", "Shoes", "Outer", "Accessory"]])
 
     today = datetime.now(ZoneInfo("Australia/Sydney")).strftime("%Y-%m-%d")
     row = [
@@ -144,6 +144,7 @@ def save_outfit_to_history(outfit: dict) -> None:
         outfit.get("top", ""),
         outfit.get("bottom", ""),
         outfit.get("shoes", ""),
+        outfit.get("outer", ""),
         outfit.get("accessory", "")
     ]
     history_sheet.append_row(row)
@@ -302,6 +303,7 @@ def parse_outfit_from_recommendation(recommendation: str) -> dict:
         "top": r"Top:\s*(.+?)(?:\n|$)",
         "bottom": r"Bottom:\s*(.+?)(?:\n|$)",
         "shoes": r"Shoes:\s*(.+?)(?:\n|$)",
+        "outer": r"Outer:\s*(.+?)(?:\n|$)",
         "accessory": r"Accessory:\s*(.+?)(?:\n|$)",
     }
 

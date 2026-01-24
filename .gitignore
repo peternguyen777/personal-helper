@@ -1,2 +1,8 @@
 node_modules/
 mcp-servers/google-sheets/
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
