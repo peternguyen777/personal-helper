@@ -9,6 +9,8 @@ A collection of MCP servers and Claude Code skills for personal productivity.
 │   └── skills/
 │       ├── what-to-wear.md  # Daily/weekly outfit recommendations
 │       └── wardrobe.md      # Wardrobe management (add/remove/list items)
+├── scripts/
+│   └── daily_outfit.py      # Automated daily outfit SMS
 ├── mcp-servers/
 │   ├── weather/             # Weather MCP server
 │   └── google-sheets/       # Google Sheets MCP server
@@ -46,6 +48,11 @@ Outfit recommendations based on weather, styled around ametora (Japanese America
 - Temperature-based layering
 - Weather modifiers (rain, UV, humidity, wind)
 - Pulls from your personal wardrobe in Google Sheets
+- History-aware: checks what you've worn recently to avoid repetition
+
+**History Tracking:**
+- Tops: Won't recommend if worn >= quantity in last 7 days (e.g., Whitesville Tee qty 8 can be worn 8x/week)
+- Bottoms: Can repeat but varies for interest
 
 **Usage:**
 - "What should I wear today?"
@@ -70,3 +77,23 @@ Manage your wardrobe catalog stored in Google Sheets.
 - "Show my tops"
 - "Add a navy deck jacket to my wardrobe"
 - "Remove the white tee from my wardrobe"
+
+## Automation
+
+### Daily Outfit SMS
+
+Automated script that sends a daily outfit recommendation via SMS at 6:30am Sydney time.
+
+**How it works:**
+1. Fetches weather from Open-Meteo API
+2. Reads wardrobe from Google Sheets
+3. Checks outfit history (last 7 days) to avoid repeating tops
+4. Gets recommendation from Claude
+5. Sends SMS via Twilio
+6. Saves outfit to History sheet
+
+**Runs via:** GitHub Actions (scheduled) or locally with `.env` file
+
+**Google Sheets Structure:**
+- `Sheet1`: Wardrobe catalog (Item, Category, Pillar, Quantity, Description)
+- `History`: Outfit history (Date, Top, Bottom, Shoes, Outer, Accessory)
