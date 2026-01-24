@@ -9,7 +9,6 @@ import { config } from "dotenv";
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { JWT } from "google-auth-library";
 import Twilio from "twilio";
-import { readFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -21,10 +20,9 @@ config({ path: join(__dirname, "..", ".env") });
 const SYDNEY_LAT = -33.8688;
 const SYDNEY_LON = 151.2093;
 const WARDROBE_SPREADSHEET_ID = "1Cx2KUswPEQypVMUPUTPtLOFQ3oGdme1TcFf7z5BZ_7k";
-const SKILL_PATH = join(__dirname, "..", ".claude", "skills", "what-to-wear.md");
 
 // Types
-interface Weather {
+export interface Weather {
   temperature_c: number;
   feels_like_c: number;
   humidity_percent: number;
@@ -39,7 +37,7 @@ interface Weather {
   date_formatted: string;
 }
 
-interface WardrobeItem {
+export interface WardrobeItem {
   Item: string;
   Category: string;
   Pillar?: string;
@@ -47,7 +45,7 @@ interface WardrobeItem {
   Description?: string;
 }
 
-interface HistoryEntry {
+export interface HistoryEntry {
   Date: string;
   Top: string;
   Bottom: string;
@@ -216,18 +214,12 @@ async function saveOutfitToHistory(outfit: Outfit): Promise<void> {
   });
 }
 
-function loadSkill(): string {
-  return readFileSync(SKILL_PATH, "utf-8");
-}
 
-async function getOutfitRecommendation(
+export function buildPrompt(
   weather: Weather,
   wardrobe: WardrobeItem[],
-  skill: string,
   history: HistoryEntry[]
-): Promise<string> {
-  const client = new Anthropic();
-
+): string {
   // Format wardrobe for the prompt
   const wardrobeText = wardrobe
     .map(item => `- ${item.Item} (${item.Category}, ${item.Pillar || "N/A"}): ${item.Description || "N/A"}`)
@@ -270,11 +262,7 @@ ${history.map(h => `- ${h.Date}: Top=${h.Top || "N/A"}, Bottom=${h.Bottom || "N/
 </recent_outfits>`;
   }
 
-  const prompt = `You are helping me decide what to wear today. Use the skill instructions below for guidance.
-
-<skill>
-${skill}
-</skill>
+  return `You are helping me decide what to wear today. Style: ametora (Japanese Americana) - natural materials, muted tones, relaxed fit, pieces that age well.
 
 <weather>
 Location: Sydney
@@ -354,7 +342,21 @@ COLOR COORDINATION RULES:
 - Create tonal contrast: light top + dark bottom OR dark top + light bottom
 - Bad combos to avoid: light blue top + light blue bottoms, olive top + olive bottoms, ecru top + ecru bottoms
 
+WEATHER RULES:
+- Outer layer: Only include if temp < 21°C
+- Rain > 40%: Prefer boots over canvas shoes
+- UV ≥ 8: Suggest a cap/hat
+
 Use actual item names from my wardrobe. Plain text only, no markdown.`;
+}
+
+async function getOutfitRecommendation(
+  weather: Weather,
+  wardrobe: WardrobeItem[],
+  history: HistoryEntry[]
+): Promise<string> {
+  const client = new Anthropic();
+  const prompt = buildPrompt(weather, wardrobe, history);
 
   const message = await client.messages.create({
     model: "claude-sonnet-4-20250514",
@@ -434,11 +436,8 @@ async function main() {
   const history = await fetchOutfitHistory(7);
   console.log(`Outfit history (last 7 days): ${JSON.stringify(history, null, 2)}`);
 
-  console.log("Loading skill...");
-  const skill = loadSkill();
-
   console.log("Getting recommendation from Claude...");
-  const recommendation = await getOutfitRecommendation(weather, wardrobe, skill, history);
+  const recommendation = await getOutfitRecommendation(weather, wardrobe, history);
   console.log(`Recommendation (${recommendation.length} chars): ${recommendation}`);
 
   console.log("Parsing outfit from recommendation...");
@@ -454,4 +453,8 @@ async function main() {
   console.log("Done!");
 }
 
-main().catch(console.error);
+// Only run main when executed directly (not when imported)
+const isMainModule = import.meta.url === `file://${process.argv[1]}`;
+if (isMainModule) {
+  main().catch(console.error);
+}
