@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "outfit": "tsx daily_outfit.ts"
+    "outfit": "tsx daily_outfit.ts",
+    "test": "tsx daily_outfit.prompt.test.ts",
+    "test:update": "tsx daily_outfit.prompt.test.ts --update",
+    "eval": "dotenv -e ../.env -- braintrust eval daily_outfit.eval.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.0",
