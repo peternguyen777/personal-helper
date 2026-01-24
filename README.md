@@ -7,15 +7,22 @@ A collection of MCP servers and Claude Code skills for personal productivity.
 ```
 ├── .claude/
 │   └── skills/
-│       ├── what-to-wear.md  # Daily/weekly outfit recommendations
-│       └── wardrobe.md      # Wardrobe management (add/remove/list items)
+│       ├── what-to-wear.md      # Daily/weekly outfit recommendations
+│       ├── wardrobe.md          # Wardrobe management
+│       └── test-commit-push.md  # Development workflow
+├── .github/
+│   └── workflows/
+│       ├── ci.yml               # Tests on PRs
+│       └── daily-outfit.yml     # Daily SMS automation
 ├── scripts/
-│   └── daily_outfit.py      # Automated daily outfit SMS
+│   ├── daily_outfit.ts          # Outfit recommendation script
+│   ├── daily_outfit.eval.ts     # Braintrust evals
+│   └── *.test.ts                # Unit & integration tests
 ├── mcp-servers/
-│   ├── weather/             # Weather MCP server
-│   └── google-sheets/       # Google Sheets MCP server
+│   ├── weather/                 # Weather MCP server
+│   └── google-sheets/           # Google Sheets MCP server
 └── docs/
-    └── plans/               # Design documents
+    └── plans/                   # Design documents
 ```
 
 ## MCP Servers
@@ -97,3 +104,36 @@ Automated script that sends a daily outfit recommendation via SMS at 6:30am Sydn
 **Google Sheets Structure:**
 - `Wardrobe Catalogue`: Wardrobe catalog (Item, Category, Pillar, Quantity, Description)
 - `History`: Outfit history (Date, Top, Bottom, Shoes, Outer, Accessory)
+
+## Development
+
+### Workflow
+
+All changes go through PRs with required CI checks. See `.claude/skills/test-commit-push.md` for details.
+
+```bash
+git checkout -b feature/my-change
+# make changes
+npm test                 # unit tests
+npm run test:integration # integration test (calls real APIs)
+git add -A && git commit -m "feat: description"
+git push -u origin feature/my-change
+gh pr create
+```
+
+### CI Checks
+
+| Job | Command | Secrets |
+|-----|---------|---------|
+| `test` | `npm test` | None |
+| `integration` | `npm run test:integration` | ANTHROPIC_API_KEY, BRAINTRUST_API_KEY, GOOGLE_SERVICE_ACCOUNT |
+
+### Evals
+
+Prompt quality is tracked via [Braintrust](https://braintrust.dev). Run evals locally:
+
+```bash
+npm run eval
+```
+
+Scorers check: required fields, char limit, correct date, weather rules (outer/boots/cap).
