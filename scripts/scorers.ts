@@ -33,7 +33,7 @@ function parseOutfit(response: string): Record<string, string> {
 
 project.scorers.create({
   name: "Has Required Fields",
-  slug: "has-required-fields",
+  slug: "has-required-fields-v4",
   parameters: z.object({
     output: z.string(),
   }),
@@ -52,7 +52,7 @@ project.scorers.create({
 
 project.scorers.create({
   name: "Under Char Limit",
-  slug: "under-char-limit",
+  slug: "under-char-limit-v4",
   parameters: z.object({
     output: z.string(),
   }),
@@ -69,7 +69,7 @@ project.scorers.create({
 
 project.scorers.create({
   name: "Uses Correct Date",
-  slug: "uses-correct-date",
+  slug: "uses-correct-date-v4",
   parameters: z.object({
     output: z.string(),
     input: z.object({
@@ -91,7 +91,7 @@ project.scorers.create({
 
 project.scorers.create({
   name: "Respects Outer Rule",
-  slug: "respects-outer-rule",
+  slug: "respects-outer-rule-v4",
   parameters: z.object({
     output: z.string(),
     expected: z.object({
@@ -118,7 +118,7 @@ project.scorers.create({
 
 project.scorers.create({
   name: "Respects Boots Rule",
-  slug: "respects-boots-rule",
+  slug: "respects-boots-rule-v4",
   parameters: z.object({
     output: z.string(),
     expected: z.object({
@@ -152,7 +152,7 @@ project.scorers.create({
 
 project.scorers.create({
   name: "Respects Cap Rule",
-  slug: "respects-cap-rule",
+  slug: "respects-cap-rule-v4",
   parameters: z.object({
     output: z.string(),
     expected: z.object({

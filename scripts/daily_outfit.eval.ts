@@ -20,12 +20,12 @@ function createHostedScorer(slug: string, name: string) {
   };
 }
 
-const hasRequiredFields = createHostedScorer("has-required-fields", "has_required_fields");
-const underCharLimit = createHostedScorer("under-char-limit", "under_char_limit");
-const usesCorrectDate = createHostedScorer("uses-correct-date", "uses_correct_date");
-const respectsOuterRule = createHostedScorer("respects-outer-rule", "respects_outer_rule");
-const respectsBootsRule = createHostedScorer("respects-boots-rule", "respects_boots_rule");
-const respectsCapRule = createHostedScorer("respects-cap-rule", "respects_cap_rule");
+const hasRequiredFields = createHostedScorer("has-required-fields-v4", "has_required_fields");
+const underCharLimit = createHostedScorer("under-char-limit-v4", "under_char_limit");
+const usesCorrectDate = createHostedScorer("uses-correct-date-v4", "uses_correct_date");
+const respectsOuterRule = createHostedScorer("respects-outer-rule-v4", "respects_outer_rule");
+const respectsBootsRule = createHostedScorer("respects-boots-rule-v4", "respects_boots_rule");
+const respectsCapRule = createHostedScorer("respects-cap-rule-v4", "respects_cap_rule");
 
 // Mock wardrobe (same as snapshot tests)
 const mockWardrobe: WardrobeItem[] = [
