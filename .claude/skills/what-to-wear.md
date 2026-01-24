@@ -45,6 +45,8 @@ Requires:
    - **Bottom repetition rule**: Bottoms can repeat within a week, but vary when possible
    - If History sheet doesn't exist, skip this step (first run)
 
+   **Note**: This skill is read-only for history. Only the automated `daily_outfit.py` script saves to history after sending SMS (i.e., when you've committed to wearing the outfit).
+
 4. **Consider the local time** (from the weather response)
    - The `local_time` field shows current day and time for the city
    - Morning commute vs afternoon vs evening can affect layering needs
