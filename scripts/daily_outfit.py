@@ -92,7 +92,7 @@ def get_sheets_client():
 def fetch_wardrobe() -> list[dict]:
     """Fetch wardrobe items from Google Sheets."""
     client = get_sheets_client()
-    sheet = client.open_by_key(WARDROBE_SPREADSHEET_ID).sheet1
+    sheet = client.open_by_key(WARDROBE_SPREADSHEET_ID).worksheet("Wardrobe Catalogue")
 
     # Get all records (assumes first row is headers)
     records = sheet.get_all_records()
@@ -281,6 +281,12 @@ Outer: [outer layer from wardrobe]
 Accessory: [optional - belt from wardrobe]
 
 CRITICAL: You MUST NOT recommend any top that appears in the "DO NOT recommend" list above. Pick a different top from the wardrobe.
+
+COLOR COORDINATION RULES:
+- NEVER pair the same shade of color for top and bottom (e.g., light blue shirt + light blue wash jeans is bad)
+- Different shades of the same color family are OK (e.g., chambray + indigo denim works - light blue + dark blue)
+- Create tonal contrast: light top + dark bottom OR dark top + light bottom
+- Bad combos to avoid: light blue top + light blue bottoms, olive top + olive bottoms, ecru top + ecru bottoms
 
 Use actual item names from my wardrobe. Plain text only, no markdown."""
 

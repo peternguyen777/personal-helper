@@ -95,5 +95,5 @@ Automated script that sends a daily outfit recommendation via SMS at 6:30am Sydn
 **Runs via:** GitHub Actions (scheduled) or locally with `.env` file
 
 **Google Sheets Structure:**
-- `Sheet1`: Wardrobe catalog (Item, Category, Pillar, Quantity, Description)
+- `Wardrobe Catalogue`: Wardrobe catalog (Item, Category, Pillar, Quantity, Description)
 - `History`: Outfit history (Date, Top, Bottom, Shoes, Outer, Accessory)

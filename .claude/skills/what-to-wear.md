@@ -13,7 +13,7 @@ Requires:
 - `weather` MCP for weather data
 - `google-sheets-mcp` for wardrobe access
 - Wardrobe spreadsheet ID: `1Cx2KUswPEQypVMUPUTPtLOFQ3oGdme1TcFf7z5BZ_7k`
-  - **Sheet1**: Wardrobe catalog (Item, Category, Pillar, Quantity, Description)
+  - **Wardrobe Catalogue**: Wardrobe catalog (Item, Category, Pillar, Quantity, Description)
   - **History**: Outfit history (Date, Top, Bottom, Shoes, Outer, Accessory)
 
 ## Instructions
@@ -29,7 +29,7 @@ Requires:
    - Never ask for location - just use Sydney by default
 
 2. **Read wardrobe** from Google Sheets
-   - Use MCP `read_range` to fetch all items from "Sheet1" sheet (columns A:E)
+   - Use MCP `read_range` to fetch all items from "Wardrobe Catalogue" sheet (columns A:E)
    - Columns: Item, Category, Pillar (optional), Quantity, Description (optional)
    - Parse into list of items with their properties
    - Use Description field (if present) for additional context about the item
