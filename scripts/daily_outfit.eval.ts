@@ -48,57 +48,15 @@ interface TestCase {
     weather: Weather;
     history: HistoryEntry[];
     excludedTops: string[];
+    // Pre-computed fields for prompt template
+    wardrobe_formatted: string;
+    history_section: string;
   };
   expected: {
     shouldHaveOuter: boolean;
     shouldPreferBoots: boolean;
     shouldSuggestCap: boolean;
   };
-}
-
-// Build wardrobe text for the prompt template
-function formatWardrobe(wardrobe: WardrobeItem[]): string {
-  return wardrobe
-    .map(item => `- ${item.Item} (${item.Category}, ${item.Pillar || "N/A"}): ${item.Description || "N/A"}`)
-    .join("\n");
-}
-
-// Build history section for the prompt template
-function formatHistory(history: HistoryEntry[], wardrobe: WardrobeItem[]): string {
-  if (history.length === 0) return "";
-
-  // Count how many times each top was worn
-  const topWearCounts: Record<string, number> = {};
-  for (const h of history) {
-    if (h.Top) {
-      topWearCounts[h.Top] = (topWearCounts[h.Top] || 0) + 1;
-    }
-  }
-
-  // Build quantity lookup from wardrobe
-  const topQuantities: Record<string, number> = {};
-  for (const item of wardrobe) {
-    if (item.Category === "Top") {
-      topQuantities[item.Item] = item.Quantity;
-    }
-  }
-
-  // Only exclude tops that have been worn >= their quantity
-  const excludedTops = Object.entries(topWearCounts)
-    .filter(([top, count]) => count >= (topQuantities[top] || 1))
-    .map(([top]) => top);
-
-  const bottomsWorn = [...new Set(history.filter(h => h.Bottom).map(h => h.Bottom))];
-
-  return `
-<recent_outfits>
-RULES:
-- DO NOT recommend these tops (already worn their max times this week): ${excludedTops.length > 0 ? excludedTops.join(", ") : "None - all tops available"}
-- Try to vary bottoms (recently worn): ${bottomsWorn.length > 0 ? bottomsWorn.join(", ") : "None"}
-
-Full history (last 7 days):
-${history.map(h => `- ${h.Date}: Top=${h.Top || "N/A"}, Bottom=${h.Bottom || "N/A"}`).join("\n")}
-</recent_outfits>`;
 }
 
 // Helper to parse outfit from response
@@ -192,11 +150,11 @@ Eval("daily-outfit-prompt", {
     // Load hosted prompt from Braintrust (cached after first load)
     const outfitPrompt = await getOutfitPrompt();
 
-    // Build template variables for the hosted prompt
+    // Build template variables from dataset input (pre-computed fields)
     const templateVars = {
       ...input.weather,
-      wardrobe_formatted: formatWardrobe(mockWardrobe),
-      history_section: formatHistory(input.history, mockWardrobe),
+      wardrobe_formatted: input.wardrobe_formatted,
+      history_section: input.history_section,
     };
 
     // Render the prompt with variables - includes span_info for tracking

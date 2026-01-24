@@ -4,7 +4,66 @@
  */
 
 import { initDataset } from "braintrust";
-import type { Weather, HistoryEntry } from "./prompt.ts";
+import type { Weather, WardrobeItem, HistoryEntry } from "./prompt.ts";
+
+// Mock wardrobe (same as eval tests)
+const mockWardrobe: WardrobeItem[] = [
+  { Item: "Whitesville Tee", Category: "Top", Pillar: "Workwear", Quantity: 8, Description: "White heavyweight cotton tee" },
+  { Item: "Buzz Rickson's Chambray", Category: "Top", Pillar: "Workwear", Quantity: 1, Description: "Light blue chambray work shirt" },
+  { Item: "Kamakura OCBD", Category: "Top", Pillar: "Ivy", Quantity: 1, Description: "White oxford cloth button-down" },
+  { Item: "OrSlow Fatigues", Category: "Bottom", Pillar: "Military", Quantity: 1, Description: "Olive green army fatigues" },
+  { Item: "OrSlow 105 Jeans", Category: "Bottom", Pillar: "Workwear", Quantity: 1, Description: "Indigo selvedge denim" },
+  { Item: "Alden Indy Boots", Category: "Shoes", Pillar: "Workwear", Quantity: 1, Description: "Brown leather work boots" },
+  { Item: "Converse Chuck 70", Category: "Shoes", Pillar: "Sportswear", Quantity: 1, Description: "White canvas sneakers" },
+  { Item: "Buzz Rickson's Deck Jacket", Category: "Outer", Pillar: "Military", Quantity: 1, Description: "Navy N-1 deck jacket" },
+  { Item: "Ebbets Field Cap", Category: "Accessory", Pillar: "Sportswear", Quantity: 1, Description: "Wool baseball cap" },
+  { Item: "Tochigi Leather Belt", Category: "Accessory", Pillar: "Workwear", Quantity: 1, Description: "Brown leather belt" },
+];
+
+// Format wardrobe for prompt template
+function formatWardrobe(wardrobe: WardrobeItem[]): string {
+  return wardrobe
+    .map(item => `- ${item.Item} (${item.Category}, ${item.Pillar || "N/A"}): ${item.Description || "N/A"}`)
+    .join("\n");
+}
+
+// Format history section for prompt template
+function formatHistory(history: HistoryEntry[], wardrobe: WardrobeItem[]): string {
+  if (history.length === 0) return "";
+
+  // Count how many times each top was worn
+  const topWearCounts: Record<string, number> = {};
+  for (const h of history) {
+    if (h.Top) {
+      topWearCounts[h.Top] = (topWearCounts[h.Top] || 0) + 1;
+    }
+  }
+
+  // Build quantity lookup from wardrobe
+  const topQuantities: Record<string, number> = {};
+  for (const item of wardrobe) {
+    if (item.Category === "Top") {
+      topQuantities[item.Item] = item.Quantity;
+    }
+  }
+
+  // Only exclude tops that have been worn >= their quantity
+  const excludedTops = Object.entries(topWearCounts)
+    .filter(([top, count]) => count >= (topQuantities[top] || 1))
+    .map(([top]) => top);
+
+  const bottomsWorn = [...new Set(history.filter(h => h.Bottom).map(h => h.Bottom))];
+
+  return `
+<recent_outfits>
+RULES:
+- DO NOT recommend these tops (already worn their max times this week): ${excludedTops.length > 0 ? excludedTops.join(", ") : "None - all tops available"}
+- Try to vary bottoms (recently worn): ${bottomsWorn.length > 0 ? bottomsWorn.join(", ") : "None"}
+
+Full history (last 7 days):
+${history.map(h => `- ${h.Date}: Top=${h.Top || "N/A"}, Bottom=${h.Bottom || "N/A"}`).join("\n")}
+</recent_outfits>`;
+}
 
 interface TestCase {
   input: {
@@ -12,6 +71,9 @@ interface TestCase {
     weather: Weather;
     history: HistoryEntry[];
     excludedTops: string[];
+    // Pre-computed fields for prompt template
+    wardrobe_formatted: string;
+    history_section: string;
   };
   expected: {
     shouldHaveOuter: boolean;
@@ -19,6 +81,9 @@ interface TestCase {
     shouldSuggestCap: boolean;
   };
 }
+
+// Pre-compute the wardrobe_formatted (same for all test cases)
+const wardrobeFormatted = formatWardrobe(mockWardrobe);
 
 const testCases: TestCase[] = [
   {
@@ -40,6 +105,8 @@ const testCases: TestCase[] = [
       },
       history: [],
       excludedTops: [],
+      wardrobe_formatted: wardrobeFormatted,
+      history_section: "", // No history
     },
     expected: {
       shouldHaveOuter: false,
@@ -66,6 +133,8 @@ const testCases: TestCase[] = [
       },
       history: [],
       excludedTops: [],
+      wardrobe_formatted: wardrobeFormatted,
+      history_section: "", // No history
     },
     expected: {
       shouldHaveOuter: false, // high is 22, >= 21
@@ -92,6 +161,8 @@ const testCases: TestCase[] = [
       },
       history: [],
       excludedTops: [],
+      wardrobe_formatted: wardrobeFormatted,
+      history_section: "", // No history
     },
     expected: {
       shouldHaveOuter: true,
@@ -127,6 +198,17 @@ const testCases: TestCase[] = [
         },
       ],
       excludedTops: ["Buzz Rickson's Chambray"],
+      wardrobe_formatted: wardrobeFormatted,
+      history_section: formatHistory([
+        {
+          Date: "2025-01-26",
+          Top: "Buzz Rickson's Chambray",
+          Bottom: "OrSlow Fatigues",
+          Shoes: "Alden Indy Boots",
+          Outer: "",
+          Accessory: "",
+        },
+      ], mockWardrobe),
     },
     expected: {
       shouldHaveOuter: false,
@@ -142,17 +224,27 @@ async function main() {
     dataset: "test-scenarios",
   });
 
+  // Delete existing records to avoid duplicates
+  console.log("Clearing existing records...");
+  const existingRecords = await dataset.fetchedData();
+  for (const record of existingRecords) {
+    dataset.delete(record.id);
+    console.log(`  - deleted ${record.id}`);
+  }
+
   console.log("Pushing test cases...");
   for (const tc of testCases) {
-    const id = dataset.insert({
+    // Use stable ID based on test name for upsert behavior
+    dataset.insert({
+      id: tc.input.name,
       input: tc.input,
       expected: tc.expected,
       metadata: { name: tc.input.name },
     });
-    console.log(`  ✓ ${tc.input.name} (${id})`);
+    console.log(`  + ${tc.input.name}`);
   }
 
-  // Flush to ensure all records are written
+  // Flush to ensure all changes are written
   await dataset.flush();
   console.log(`\nDone! Pushed ${testCases.length} test cases to Braintrust.`);
 }
