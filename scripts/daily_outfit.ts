@@ -5,14 +5,14 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
-import { initLogger, wrapAnthropic, traced } from "braintrust";
+import { initLogger, wrapAnthropic, traced, loadPrompt } from "braintrust";
 import { config } from "dotenv";
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { JWT } from "google-auth-library";
 import Twilio from "twilio";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
-import { buildPrompt, type Weather, type WardrobeItem, type HistoryEntry } from "./prompt.ts";
+import { type Weather, type WardrobeItem, type HistoryEntry } from "./prompt.ts";
 import {
   hasRequiredFields,
   underCharLimit,
@@ -23,8 +23,11 @@ import {
 } from "./scorers.ts";
 import { CONFIG } from "./config.ts";
 
-// Re-export for backwards compatibility
-export { buildPrompt, type Weather, type WardrobeItem, type HistoryEntry } from "./prompt.ts";
+// Re-export types for backwards compatibility
+export { type Weather, type WardrobeItem, type HistoryEntry } from "./prompt.ts";
+
+// Pinned prompt version - update this when deploying new prompt versions
+const PROMPT_VERSION = "d059a041c74c3f5a";
 
 // Load .env file if it exists (for local development)
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -197,6 +200,69 @@ async function saveOutfitToHistory(outfit: Outfit): Promise<void> {
   });
 }
 
+// Format wardrobe for prompt template
+function formatWardrobe(wardrobe: WardrobeItem[]): string {
+  return wardrobe
+    .map(item => `- ${item.Item} (${item.Category}, ${item.Pillar || "N/A"}): ${item.Description || "N/A"}`)
+    .join("\n");
+}
+
+// Format history section for prompt template
+function formatHistorySection(history: HistoryEntry[], wardrobe: WardrobeItem[]): { historySection: string; excludedTops: string[] } {
+  if (history.length === 0) {
+    return { historySection: "", excludedTops: [] };
+  }
+
+  // Count how many times each top was worn
+  const topWearCounts: Record<string, number> = {};
+  for (const h of history) {
+    if (h.Top) {
+      topWearCounts[h.Top] = (topWearCounts[h.Top] || 0) + 1;
+    }
+  }
+
+  // Build quantity lookup from wardrobe
+  const topQuantities: Record<string, number> = {};
+  for (const item of wardrobe) {
+    if (item.Category === "Top") {
+      topQuantities[item.Item] = item.Quantity;
+    }
+  }
+
+  // Only exclude tops that have been worn >= their quantity
+  const excludedTops = Object.entries(topWearCounts)
+    .filter(([top, count]) => count >= (topQuantities[top] || 1))
+    .map(([top]) => top);
+
+  const bottomsWorn = [...new Set(history.filter(h => h.Bottom).map(h => h.Bottom))];
+
+  const historySection = `
+<recent_outfits>
+RULES:
+- DO NOT recommend these tops (already worn their max times this week): ${excludedTops.length > 0 ? excludedTops.join(", ") : "None - all tops available"}
+- Try to vary bottoms (recently worn): ${bottomsWorn.length > 0 ? bottomsWorn.join(", ") : "None"}
+
+Full history (last 7 days):
+${history.map(h => `- ${h.Date}: Top=${h.Top || "N/A"}, Bottom=${h.Bottom || "N/A"}`).join("\n")}
+</recent_outfits>`;
+
+  return { historySection, excludedTops };
+}
+
+// Cache for the loaded prompt
+let outfitPromptCache: Awaited<ReturnType<typeof loadPrompt>> | null = null;
+
+async function getOutfitPrompt() {
+  if (!outfitPromptCache) {
+    outfitPromptCache = await loadPrompt({
+      projectName: "daily-outfit-prompt",
+      slug: "daily-outfit",
+      version: PROMPT_VERSION,
+    });
+  }
+  return outfitPromptCache;
+}
+
 async function getOutfitRecommendation(
   weather: Weather,
   wardrobe: WardrobeItem[],
@@ -204,13 +270,28 @@ async function getOutfitRecommendation(
 ): Promise<string> {
   // Wrap Anthropic client for Braintrust logging
   const client = wrapAnthropic(new Anthropic());
-  const prompt = buildPrompt(weather, wardrobe, history);
+
+  // Load hosted prompt from Braintrust (pinned version)
+  const outfitPrompt = await getOutfitPrompt();
+
+  // Format input for the prompt template
+  const { historySection, excludedTops } = formatHistorySection(history, wardrobe);
+  const input = {
+    weather,
+    wardrobe_formatted: formatWardrobe(wardrobe),
+    history_section: historySection,
+    excludedTops,
+  };
+
+  // Render the prompt with input data
+  const rendered = outfitPrompt.build({ input });
+  const messages = rendered.messages as Array<{ role: "user" | "assistant"; content: string }>;
 
   const message = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: rendered.model || "claude-sonnet-4-20250514",
     max_tokens: 200,
     temperature: 1.0,
-    messages: [{ role: "user", content: prompt }]
+    messages,
   });
 
   let response = (message.content[0] as { text: string }).text;

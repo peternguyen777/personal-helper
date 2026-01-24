@@ -133,11 +133,15 @@ const dataset = initDataset("daily-outfit-prompt", { dataset: "test-scenarios" }
 // Cache for the loaded prompt (loaded once on first use)
 let outfitPromptCache: Awaited<ReturnType<typeof loadPrompt>> | null = null;
 
+// Pinned prompt version - should match daily_outfit.ts
+const PROMPT_VERSION = "d059a041c74c3f5a";
+
 async function getOutfitPrompt() {
   if (!outfitPromptCache) {
     outfitPromptCache = await loadPrompt({
       projectName: "daily-outfit-prompt",
       slug: "daily-outfit",
+      version: PROMPT_VERSION,
     });
   }
   return outfitPromptCache;
