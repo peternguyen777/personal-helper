@@ -5,7 +5,7 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
-import { initLogger, wrapAnthropic } from "braintrust";
+import { initLogger, wrapAnthropic, traced } from "braintrust";
 import { config } from "dotenv";
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { JWT } from "google-auth-library";
@@ -13,6 +13,14 @@ import Twilio from "twilio";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { buildPrompt, type Weather, type WardrobeItem, type HistoryEntry } from "./prompt.ts";
+import {
+  hasRequiredFields,
+  underCharLimit,
+  usesCorrectDate,
+  respectsOuterRule,
+  respectsBootsRule,
+  respectsCapRule,
+} from "./scorers.ts";
 
 // Re-export for backwards compatibility
 export { buildPrompt, type Weather, type WardrobeItem, type HistoryEntry } from "./prompt.ts";
@@ -240,6 +248,41 @@ function parseOutfitFromRecommendation(recommendation: string): Outfit {
   return outfit;
 }
 
+function scoreRecommendation(
+  output: string,
+  weather: Weather
+): { scores: Record<string, number>; passed: boolean } {
+  // Build expected values based on weather rules
+  const expected = {
+    shouldHaveOuter: weather.high_c < 21,
+    shouldPreferBoots: weather.daily_rain_chance_percent > 40,
+    shouldSuggestCap: weather.uv_index >= 8,
+  };
+
+  const input = { weather };
+
+  // Run all scorers
+  const results = [
+    hasRequiredFields({ output }),
+    underCharLimit({ output }),
+    usesCorrectDate({ output, input }),
+    respectsOuterRule({ output, expected, input }),
+    respectsBootsRule({ output, expected, input }),
+    respectsCapRule({ output, expected, input }),
+  ];
+
+  // Collect scores
+  const scores: Record<string, number> = {};
+  for (const result of results) {
+    scores[result.name] = result.score;
+  }
+
+  // Check if all passed
+  const passed = results.every(r => r.score === 1);
+
+  return { scores, passed };
+}
+
 async function sendSms(message: string): Promise<void> {
   const client = Twilio(
     process.env.TWILIO_ACCOUNT_SID!,
@@ -279,9 +322,31 @@ async function main() {
   const history = await fetchOutfitHistory(7);
   console.log(`Outfit history (last 7 days): ${JSON.stringify(history, null, 2)}`);
 
-  console.log("Getting recommendation from Claude...");
-  const recommendation = await getOutfitRecommendation(weather, wardrobe, history);
-  console.log(`Recommendation (${recommendation.length} chars): ${recommendation}`);
+  // Use traced to create a span for recommendation and scoring
+  const { recommendation, scores, passed } = await traced(async (span) => {
+    console.log("Getting recommendation from Claude...");
+    const recommendation = await getOutfitRecommendation(weather, wardrobe, history);
+    console.log(`Recommendation (${recommendation.length} chars): ${recommendation}`);
+
+    console.log("Scoring recommendation...");
+    const { scores, passed } = scoreRecommendation(recommendation, weather);
+    console.log(`Scores: ${JSON.stringify(scores, null, 2)}`);
+    console.log(`All scores passed: ${passed}`);
+
+    // Log scores to the span
+    span.log({
+      input: { weather, historyCount: history.length },
+      output: recommendation,
+      scores,
+      metadata: {
+        passed,
+        charCount: recommendation.length,
+        date: weather.date_formatted,
+      },
+    });
+
+    return { recommendation, scores, passed };
+  }, { name: "daily-outfit-recommendation" });
 
   console.log("Parsing outfit from recommendation...");
   const outfit = parseOutfitFromRecommendation(recommendation);

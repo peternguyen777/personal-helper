@@ -6,7 +6,10 @@
     "outfit": "tsx daily_outfit.ts",
     "test": "tsx daily_outfit.prompt.test.ts",
     "test:update": "tsx daily_outfit.prompt.test.ts --update",
-    "eval": "dotenv -e ../.env -- braintrust eval daily_outfit.eval.ts"
+    "eval": "dotenv -e ../.env -- braintrust eval daily_outfit.eval.ts",
+    "push:dataset": "dotenv -e ../.env -- tsx push_dataset.ts",
+    "push:prompt": "dotenv -e ../.env -- braintrust push push_prompt.ts",
+    "push:scorers": "dotenv -e ../.env -- braintrust push scorers.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.0",

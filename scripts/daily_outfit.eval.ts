@@ -1,11 +1,21 @@
 /**
  * Braintrust evals for the outfit recommendation prompt.
  * Run with: npx dotenv -e ../.env -- braintrust eval daily_outfit.eval.ts
+ *
+ * Uses hosted dataset and prompt from Braintrust
  */
 
-import { Eval, wrapAnthropic } from "braintrust";
+import { Eval, initDataset, loadPrompt, wrapAnthropic, currentSpan } from "braintrust";
 import Anthropic from "@anthropic-ai/sdk";
-import { buildPrompt, Weather, WardrobeItem, HistoryEntry } from "./prompt.ts";
+import type { Weather, WardrobeItem, HistoryEntry } from "./prompt.ts";
+import {
+  hasRequiredFields,
+  underCharLimit,
+  usesCorrectDate,
+  respectsOuterRule,
+  respectsBootsRule,
+  respectsCapRule,
+} from "./scorers.ts";
 
 // Mock wardrobe (same as snapshot tests)
 const mockWardrobe: WardrobeItem[] = [
@@ -21,7 +31,7 @@ const mockWardrobe: WardrobeItem[] = [
   { Item: "Tochigi Leather Belt", Category: "Accessory", Pillar: "Workwear", Quantity: 1, Description: "Brown leather belt" },
 ];
 
-// Test case type
+// Test case type (matches structure in Braintrust dataset)
 interface TestCase {
   input: {
     name: string;
@@ -36,62 +46,50 @@ interface TestCase {
   };
 }
 
-// Test scenarios
-const testCases: TestCase[] = [
-  {
-    input: {
-      name: "hot-summer-day",
-      weather: {
-        temperature_c: 26, feels_like_c: 28, humidity_percent: 65, wind_speed_kmh: 15,
-        rain_chance_percent: 5, conditions: "Sunny", high_c: 28, low_c: 20,
-        daily_rain_chance_percent: 10, uv_index: 11, local_time: "7:30 AM", date_formatted: "Friday 24 Jan"
-      },
-      history: [],
-      excludedTops: [],
-    },
-    expected: {
-      shouldHaveOuter: false,  // temp >= 21
-      shouldPreferBoots: false, // rain < 40%
-      shouldSuggestCap: true,   // UV >= 8
+// Build wardrobe text for the prompt template
+function formatWardrobe(wardrobe: WardrobeItem[]): string {
+  return wardrobe
+    .map(item => `- ${item.Item} (${item.Category}, ${item.Pillar || "N/A"}): ${item.Description || "N/A"}`)
+    .join("\n");
+}
+
+// Build history section for the prompt template
+function formatHistory(history: HistoryEntry[], wardrobe: WardrobeItem[]): string {
+  if (history.length === 0) return "";
+
+  // Count how many times each top was worn
+  const topWearCounts: Record<string, number> = {};
+  for (const h of history) {
+    if (h.Top) {
+      topWearCounts[h.Top] = (topWearCounts[h.Top] || 0) + 1;
     }
-  },
-  {
-    input: {
-      name: "cool-rainy-day",
-      weather: {
-        temperature_c: 15, feels_like_c: 13, humidity_percent: 85, wind_speed_kmh: 25,
-        rain_chance_percent: 60, conditions: "Overcast", high_c: 17, low_c: 14,
-        daily_rain_chance_percent: 70, uv_index: 3, local_time: "7:30 AM", date_formatted: "Sunday 26 Jan"
-      },
-      history: [],
-      excludedTops: [],
-    },
-    expected: {
-      shouldHaveOuter: true,   // temp < 21
-      shouldPreferBoots: true,  // rain > 40%
-      shouldSuggestCap: false,  // UV < 8
+  }
+
+  // Build quantity lookup from wardrobe
+  const topQuantities: Record<string, number> = {};
+  for (const item of wardrobe) {
+    if (item.Category === "Top") {
+      topQuantities[item.Item] = item.Quantity;
     }
-  },
-  {
-    input: {
-      name: "with-excluded-top",
-      weather: {
-        temperature_c: 20, feels_like_c: 19, humidity_percent: 60, wind_speed_kmh: 12,
-        rain_chance_percent: 20, conditions: "Mostly sunny", high_c: 24, low_c: 18,
-        daily_rain_chance_percent: 25, uv_index: 7, local_time: "7:30 AM", date_formatted: "Monday 27 Jan"
-      },
-      history: [
-        { Date: "2025-01-26", Top: "Buzz Rickson's Chambray", Bottom: "OrSlow Fatigues", Shoes: "Alden Indy Boots", Outer: "", Accessory: "" },
-      ],
-      excludedTops: ["Buzz Rickson's Chambray"],
-    },
-    expected: {
-      shouldHaveOuter: false,  // temp >= 21 (high is 24)
-      shouldPreferBoots: false, // rain < 40%
-      shouldSuggestCap: false,  // UV < 8
-    }
-  },
-];
+  }
+
+  // Only exclude tops that have been worn >= their quantity
+  const excludedTops = Object.entries(topWearCounts)
+    .filter(([top, count]) => count >= (topQuantities[top] || 1))
+    .map(([top]) => top);
+
+  const bottomsWorn = [...new Set(history.filter(h => h.Bottom).map(h => h.Bottom))];
+
+  return `
+<recent_outfits>
+RULES:
+- DO NOT recommend these tops (already worn their max times this week): ${excludedTops.length > 0 ? excludedTops.join(", ") : "None - all tops available"}
+- Try to vary bottoms (recently worn): ${bottomsWorn.length > 0 ? bottomsWorn.join(", ") : "None"}
+
+Full history (last 7 days):
+${history.map(h => `- ${h.Date}: Top=${h.Top || "N/A"}, Bottom=${h.Bottom || "N/A"}`).join("\n")}
+</recent_outfits>`;
+}
 
 // Helper to parse outfit from response
 function parseOutfit(response: string): Record<string, string> {
@@ -107,28 +105,7 @@ function parseOutfit(response: string): Record<string, string> {
   return outfit;
 }
 
-// Custom scorers
-const hasRequiredFields = (args: { output: string }) => {
-  const outfit = parseOutfit(args.output);
-  const hasTop = !!outfit.top;
-  const hasBottom = !!outfit.bottom;
-  const hasShoes = !!outfit.shoes;
-  return {
-    name: "has_required_fields",
-    score: hasTop && hasBottom && hasShoes ? 1 : 0,
-    metadata: { hasTop, hasBottom, hasShoes },
-  };
-};
-
-const underCharLimit = (args: { output: string }) => {
-  const length = args.output.length;
-  return {
-    name: "under_char_limit",
-    score: length <= 480 ? 1 : 0,
-    metadata: { length, limit: 480 },
-  };
-};
-
+// Local scorers (depend on local mockWardrobe data)
 const usesWardrobeItems = (args: { output: string }) => {
   const outfit = parseOutfit(args.output);
   const wardrobeItems = mockWardrobe.map(w => w.Item.toLowerCase());
@@ -179,99 +156,69 @@ const respectsExcludedTops = (args: { output: string; expected: TestCase["expect
   };
 };
 
-const respectsOuterRule = (args: { output: string; expected: TestCase["expected"]; input: TestCase["input"] }) => {
-  const outfit = parseOutfit(args.output);
-  const hasOuter = !!outfit.outer;
-  const shouldHaveOuter = args.expected.shouldHaveOuter;
-
-  // If should have outer but doesn't, that's a fail
-  // If shouldn't have outer but does, that's also a fail
-  const correct = hasOuter === shouldHaveOuter;
-
-  return {
-    name: "respects_outer_rule",
-    score: correct ? 1 : 0,
-    metadata: { hasOuter, shouldHaveOuter, temp: args.input.weather.high_c },
-  };
-};
-
-const respectsBootsRule = (args: { output: string; expected: TestCase["expected"]; input: TestCase["input"] }) => {
-  const outfit = parseOutfit(args.output);
-  const shoes = (outfit.shoes || "").toLowerCase();
-  const hasBoots = shoes.includes("boot");
-  const shouldPreferBoots = args.expected.shouldPreferBoots;
-
-  // Only penalize if should prefer boots but didn't use them
-  if (!shouldPreferBoots) {
-    return { name: "respects_boots_rule", score: 1, metadata: { skipped: true, rain: args.input.weather.daily_rain_chance_percent } };
-  }
-
-  return {
-    name: "respects_boots_rule",
-    score: hasBoots ? 1 : 0,
-    metadata: { shoes: outfit.shoes, hasBoots, rain: args.input.weather.daily_rain_chance_percent },
-  };
-};
-
-const respectsCapRule = (args: { output: string; expected: TestCase["expected"]; input: TestCase["input"] }) => {
-  const outfit = parseOutfit(args.output);
-  const accessory = (outfit.accessory || "").toLowerCase();
-  const hasCap = accessory.includes("cap") || accessory.includes("hat");
-  const shouldSuggestCap = args.expected.shouldSuggestCap;
-
-  // Only penalize if should suggest cap but didn't
-  if (!shouldSuggestCap) {
-    return { name: "respects_cap_rule", score: 1, metadata: { skipped: true, uv: args.input.weather.uv_index } };
-  }
-
-  return {
-    name: "respects_cap_rule",
-    score: hasCap ? 1 : 0,
-    metadata: { accessory: outfit.accessory, hasCap, uv: args.input.weather.uv_index },
-  };
-};
-
-const usesCorrectDate = (args: { output: string; input: TestCase["input"] }) => {
-  const expectedDate = args.input.weather.date_formatted;
-  const hasDate = args.output.includes(expectedDate);
-
-  return {
-    name: "uses_correct_date",
-    score: hasDate ? 1 : 0,
-    metadata: { expectedDate, found: hasDate },
-  };
-};
-
 // Main eval - wrap Anthropic client for automatic prompt tracing
 const client = wrapAnthropic(new Anthropic());
 
+// Load test scenarios from Braintrust-hosted dataset
+const dataset = initDataset("daily-outfit-prompt", { dataset: "test-scenarios" });
+
+// Cache for the loaded prompt (loaded once on first use)
+let outfitPromptCache: Awaited<ReturnType<typeof loadPrompt>> | null = null;
+
+async function getOutfitPrompt() {
+  if (!outfitPromptCache) {
+    outfitPromptCache = await loadPrompt({
+      projectName: "daily-outfit-prompt",
+      slug: "daily-outfit",
+    });
+  }
+  return outfitPromptCache;
+}
+
 Eval("daily-outfit-prompt", {
-  data: () => testCases.map(tc => ({
-    input: tc.input,
-    expected: tc.expected,
-  })),
+  data: dataset,
 
   task: async (input) => {
-    const prompt = buildPrompt(input.weather, mockWardrobe, input.history);
+    // Load hosted prompt from Braintrust (cached after first load)
+    const outfitPrompt = await getOutfitPrompt();
+
+    // Build template variables for the hosted prompt
+    const templateVars = {
+      ...input.weather,
+      wardrobe_formatted: formatWardrobe(mockWardrobe),
+      history_section: formatHistory(input.history, mockWardrobe),
+    };
+
+    // Render the prompt with variables - includes span_info for tracking
+    const rendered = outfitPrompt.build(templateVars);
+    const messages = rendered.messages as Array<{ role: "user" | "assistant"; content: string }>;
+
+    // Log prompt metadata to the current span for version tracking
+    if (rendered.span_info) {
+      currentSpan().log({ metadata: rendered.span_info.metadata });
+    }
 
     const message = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: rendered.model || "claude-sonnet-4-20250514",
       max_tokens: 200,
       temperature: 1.0,
-      messages: [{ role: "user", content: prompt }],
+      messages,
     });
 
     return (message.content[0] as { text: string }).text;
   },
 
   scores: [
+    // Imported from scorers.ts (also pushed to Braintrust)
     hasRequiredFields,
     underCharLimit,
-    usesWardrobeItems,
-    respectsExcludedTops,
-    respectsOuterRule,
-    respectsBootsRule,
-    respectsCapRule,
     usesCorrectDate,
+    // Cast scorers that depend on `expected` field (which our dataset provides)
+    respectsOuterRule as any,
+    respectsBootsRule as any,
+    respectsCapRule as any,
+    // Local scorers (depend on mockWardrobe data)
+    usesWardrobeItems,
+    respectsExcludedTops as any,
   ],
 });
