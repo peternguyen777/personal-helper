@@ -5,6 +5,7 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
+import { initLogger, wrapAnthropic } from "braintrust";
 import { config } from "dotenv";
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { JWT } from "google-auth-library";
@@ -19,6 +20,12 @@ export { buildPrompt, type Weather, type WardrobeItem, type HistoryEntry } from 
 // Load .env file if it exists (for local development)
 const __dirname = dirname(fileURLToPath(import.meta.url));
 config({ path: join(__dirname, "..", ".env") });
+
+// Initialize Braintrust logger for production monitoring
+const logger = initLogger({
+  projectName: "daily-outfit-prompt",
+  apiKey: process.env.BRAINTRUST_API_KEY,
+});
 
 // Constants
 const SYDNEY_LAT = -33.8688;
@@ -190,7 +197,8 @@ async function getOutfitRecommendation(
   wardrobe: WardrobeItem[],
   history: HistoryEntry[]
 ): Promise<string> {
-  const client = new Anthropic();
+  // Wrap Anthropic client for Braintrust logging
+  const client = wrapAnthropic(new Anthropic());
   const prompt = buildPrompt(weather, wardrobe, history);
 
   const message = await client.messages.create({
