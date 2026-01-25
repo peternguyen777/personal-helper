@@ -27,7 +27,7 @@ import { CONFIG } from "./config.ts";
 export { type Weather, type WardrobeItem, type HistoryEntry } from "./types.ts";
 
 // Pinned prompt version - update this when deploying new prompt versions
-const PROMPT_VERSION = "d059a041c74c3f5a";
+const PROMPT_VERSION = "6c4a47240a79ae7b";
 
 // Load .env file if it exists (for local development)
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -73,6 +73,28 @@ function formatTime(date: Date): string {
   return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
 }
 
+export async function fetchWithRetry(url: string, maxRetries: number = 3): Promise<Response> {
+  let lastError: Error | null = null;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeout);
+      if (response.ok) return response;
+      lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
+    } catch (err) {
+      lastError = err as Error;
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s, 8s
+        console.log(`Weather fetch attempt ${attempt} failed, retrying in ${delay/1000}s...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  throw new Error(`Weather API failed after ${maxRetries} attempts: ${lastError?.message}`);
+}
+
 async function fetchWeather(): Promise<Weather> {
   const params = new URLSearchParams({
     latitude: CONFIG.location.latitude.toString(),
@@ -83,7 +105,7 @@ async function fetchWeather(): Promise<Weather> {
     forecast_days: "1"
   });
 
-  const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
+  const response = await fetchWithRetry(`https://api.open-meteo.com/v1/forecast?${params}`);
   if (!response.ok) throw new Error(`Weather API error: ${response.statusText}`);
 
   const data = await response.json();
