@@ -54,8 +54,8 @@ function assert(condition: boolean, message: string) {
   }
 }
 
-async function runTests() {
-  console.log("Running integration test (real wardrobe, mocked SMS)...\n");
+async function testHappyPath() {
+  console.log("Test: Happy path (real wardrobe, mocked SMS)...\n");
 
   // Clear tracking arrays
   smsCalls.length = 0;
@@ -78,6 +78,32 @@ async function runTests() {
 
   // Verify history was saved
   assert(historySaves.length === 1, "saveOutfitToHistory was called exactly once");
+}
+
+async function testSmsFailurePropagates() {
+  console.log("\nTest: SMS failure propagates error...\n");
+
+  const failingDependencies: Dependencies = {
+    ...testDependencies,
+    sendSms: async () => {
+      throw new Error("Twilio: Account suspended");
+    },
+  };
+
+  let errorThrown = false;
+  try {
+    await runDailyOutfit(failingDependencies);
+  } catch (err: any) {
+    errorThrown = true;
+    assert(err.message === "Twilio: Account suspended", "Error message is correct");
+  }
+
+  assert(errorThrown, "Error was thrown when SMS fails");
+}
+
+async function runTests() {
+  await testHappyPath();
+  await testSmsFailurePropagates();
 
   // Summary
   console.log(`\n${passed} passed, ${failed} failed`);
