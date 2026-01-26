@@ -447,8 +447,13 @@ export async function runDailyOutfit(deps: Dependencies = defaultDependencies): 
     console.log(`All scores passed: ${passed}`);
 
     // Log scores to the span
+    const { historySection } = formatHistorySection(history, wardrobe);
     span.log({
-      input: { weather, historyCount: history.length },
+      input: {
+        weather,
+        wardrobe_formatted: formatWardrobe(wardrobe),
+        history_section: historySection,
+      },
       output: recommendation,
       scores,
       metadata: {
