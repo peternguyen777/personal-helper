@@ -27,7 +27,7 @@ import { CONFIG } from "./config.ts";
 export { type Weather, type WardrobeItem, type HistoryEntry } from "./types.ts";
 
 // Pinned prompt version - update this when deploying new prompt versions
-const PROMPT_VERSION = "ee6a8c36a4faaf86";
+const PROMPT_VERSION = "4ab69a410103bcfe";
 
 // Load .env file if it exists (for local development)
 const __dirname = dirname(fileURLToPath(import.meta.url));
