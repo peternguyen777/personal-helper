@@ -87,7 +87,7 @@ export async function fetchWithRetry(url: string, maxRetries: number = 3): Promi
       lastError = err as Error;
       if (attempt < maxRetries) {
         const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s, 8s
-        console.log(`Weather fetch attempt ${attempt} failed, retrying in ${delay/1000}s...`);
+        console.log(`Weather fetch attempt ${attempt} failed, retrying in ${delay / 1000}s...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -257,15 +257,21 @@ function formatHistorySection(history: HistoryEntry[], wardrobe: WardrobeItem[])
     .map(([top]) => top);
 
   const bottomsWorn = [...new Set(history.filter(h => h.Bottom).map(h => h.Bottom))];
+  const shoesWorn = [...new Set(history.filter(h => h.Shoes).map(h => h.Shoes))];
+  const outersWorn = [...new Set(history.filter(h => h.Outer).map(h => h.Outer))];
+  const accessoriesWorn = [...new Set(history.filter(h => h.Accessory).map(h => h.Accessory))];
 
   const historySection = `
 <recent_outfits>
 RULES:
 - DO NOT recommend these tops (already worn their max times this week): ${excludedTops.length > 0 ? excludedTops.join(", ") : "None - all tops available"}
 - Try to vary bottoms (recently worn): ${bottomsWorn.length > 0 ? bottomsWorn.join(", ") : "None"}
+- Try to vary shoes (recently worn): ${shoesWorn.length > 0 ? shoesWorn.join(", ") : "None"}
+- Try to vary outers (recently worn): ${outersWorn.length > 0 ? outersWorn.join(", ") : "None"}
+- Try to vary accessories (recently worn): ${accessoriesWorn.length > 0 ? accessoriesWorn.join(", ") : "None"}
 
 Full history (last 7 days):
-${history.map(h => `- ${h.Date}: Top=${h.Top || "N/A"}, Bottom=${h.Bottom || "N/A"}`).join("\n")}
+${history.map(h => `- ${h.Date}: Top=${h.Top || "N/A"}, Bottom=${h.Bottom || "N/A"}, Shoes=${h.Shoes || "N/A"}, Outer=${h.Outer || "N/A"}, Accessory=${h.Accessory || "N/A"}`).join("\n")}
 </recent_outfits>`;
 
   return { historySection, excludedTops };
