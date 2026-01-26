@@ -27,7 +27,7 @@ import { CONFIG } from "./config.ts";
 export { type Weather, type WardrobeItem, type HistoryEntry } from "./types.ts";
 
 // Pinned prompt version - update this when deploying new prompt versions
-const PROMPT_VERSION = "6c4a47240a79ae7b";
+const PROMPT_VERSION = "ee6a8c36a4faaf86";
 
 // Load .env file if it exists (for local development)
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -311,17 +311,12 @@ async function getOutfitRecommendation(
 
   const message = await client.messages.create({
     model: rendered.model || "claude-sonnet-4-20250514",
-    max_tokens: 200,
+    max_tokens: 400,
     temperature: 1.0,
     messages,
   });
 
-  let response = (message.content[0] as { text: string }).text;
-
-  // Cap at max SMS chars (3 SMS segments)
-  if (response.length > CONFIG.sms.maxChars) {
-    response = response.slice(0, CONFIG.sms.maxChars - 3) + "...";
-  }
+  const response = (message.content[0] as { text: string }).text;
 
   return response;
 }

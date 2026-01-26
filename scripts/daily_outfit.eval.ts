@@ -88,7 +88,7 @@ const dataset = initDataset("daily-outfit-prompt", { dataset: "test-scenarios" }
 let outfitPromptCache: Awaited<ReturnType<typeof loadPrompt>> | null = null;
 
 // Pinned prompt version - should match daily_outfit.ts
-const PROMPT_VERSION = "d059a041c74c3f5a";
+const PROMPT_VERSION = "ee6a8c36a4faaf86";
 
 async function getOutfitPrompt() {
   if (!outfitPromptCache) {
@@ -119,7 +119,7 @@ Eval("daily-outfit-prompt", {
 
     const message = await client.messages.create({
       model: rendered.model || "claude-sonnet-4-20250514",
-      max_tokens: 200,
+      max_tokens: 400,
       temperature: 1.0,
       messages,
     });
